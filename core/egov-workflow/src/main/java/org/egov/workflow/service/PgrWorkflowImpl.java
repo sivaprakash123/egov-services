@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class PgrWorkflowImpl implements Workflow {
 
+    public static final String DEPARTMENT = "department";
     private ComplaintRouterService complaintRouterService;
     private StateService stateService;
     private WorkflowTypeService workflowTypeService;
@@ -81,11 +82,11 @@ public class PgrWorkflowImpl implements Workflow {
     	    state.setStatus(State.StateStatus.ENDED);
     	    state.setValue("closed");
     	    state.setComments(processInstance.getValueForKey("approvalComments"));
-    	    //TODO This is logged in username which should be populated
     	    state.setSenderName(processInstance.getSenderName());
     	    state.setDateInfo(processInstance.getCreatedDate());
     	    //TODO OWNER POSITION condition to be checked
-    	    state.setOwnerPosition(state.getOwnerPosition());
+            if(processInstance.getValueForKey("userRole").equals("Grievance Officer"))
+    	        state.setOwnerPosition(state.getOwnerPosition());
     	    //TODO - Get these values from request info
             state.setCreatedBy(00L);
             state.setLastModifiedBy(00L);
@@ -138,8 +139,8 @@ public class PgrWorkflowImpl implements Workflow {
                 Attribute attr = new Attribute();
                 attr.setValues(new ArrayList<>());
                 attr.setCode("department");
-                attr.getValues().add(dept.getName());
-                t.getAttributes().put("department", attr);
+//                attr.getValues().add(dept.getName());
+//                t.getAttributes().put("department", putDepartmentValues(dept.getName()));
             } else {
                 /*EmployeeResponse emp = employeeService.getUserForPosition(stateHistory.getOwnerPosition(), new Date());*/
                 EmployeeResponse emp = employeeService.getUserForPosition();
@@ -149,7 +150,7 @@ public class PgrWorkflowImpl implements Workflow {
                 Attribute attr = new Attribute();
                 attr.setValues(new ArrayList<>());
                 attr.setCode("department");
-                attr.getValues().add(dept.getName());
+//                attr.getValues().add(dept.getName());
                 //t.getAttributes().put("department", attr);
             }
             tasks.add(t);
@@ -170,7 +171,7 @@ public class PgrWorkflowImpl implements Workflow {
             Attribute attr = new Attribute();
             attr.setValues(new ArrayList<>());
             attr.setCode("department");
-            attr.getValues().add(dept.getName());
+//            attr.getValues().add(dept.getName());
             //t.getAttributes().put("department", attr);
         } else {
             /*EmployeeResponse emp = employeeService.getUserForPosition(stateHistory.getOwnerPosition(), new Date());*/
@@ -181,11 +182,24 @@ public class PgrWorkflowImpl implements Workflow {
             Attribute attr = new Attribute();
             attr.setValues(new ArrayList<>());
             attr.setCode("department");
-            attr.setValues(new ArrayList<String>());
-            attr.getValues().add(dept.getName());
+//            attr.setValues(new ArrayList<String>());
+//            attr.getValues().add(dept.getName());
             //t.getAttributes().put("department", attr);
         }
         tasks.add(t);
         return tasks;
     }
-}
+
+
+    private Attribute putDepartmentValues (String departmentName){
+            Value value = new Value(DEPARTMENT, departmentName);
+            List<Value> values = Collections.singletonList(value);
+            Attribute attribute = new Attribute().builder()
+                    .values(values)
+                    .build();
+
+            return attribute;
+        }
+
+
+    }

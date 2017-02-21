@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Attribute {
 
 	@JsonProperty("variable")

@@ -66,7 +66,31 @@ public class WorkFlowControllerTest {
         assertEquals("someId", RequestContext.getId());
     }
 
-    private String getFileContents(final String fileName) {
+    @Test
+    public void test_should_close_workflow() throws Exception{
+        final ProcessInstance expectedProcessInstance = ProcessInstance.builder()
+                .action("END")
+                .assignee(2L)
+                .businessKey("765")
+                .type("Complaint")
+                .description("Workflow Terminated")
+                .senderName("garry")
+                .build();
+
+        when(workflow.end(eq(TENANT_ID), argThat(new processInstanceMatcherForCloseWorkflow(expectedProcessInstance))))
+                .thenReturn(expectedProcessInstance);
+
+        mockMvc.perform(post("/close")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(getFileContents("closeWorkflowRequest.json"))
+                .header("X-CORRELATION-ID", "someId"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8));
+
+        assertEquals("someId", RequestContext.getId());
+    }
+
+    private String getFileContents(String fileName) {
         try {
             return IOUtils.toString(this.getClass().getClassLoader()
                     .getResourceAsStream(fileName), "UTF-8");
@@ -147,8 +171,44 @@ public class WorkFlowControllerTest {
             Value complaintType = attributesMap.get(COMPLAINT_TYPE_CODE).getValues().get(0);
             if(attributesMap.get(BOUNDARY_ID).getValues().size() != 1)
                 return false;
-            Value boundary = attributesMap.get(BOUNDARY_ID).getValues().get(0);
+            Value boundary = attributesMap.
+                    get(BOUNDARY_ID).getValues().get(0);
             return (complaintType.getName().equals("PHDMG") && boundary.getName().equals("173"));
+        }
+    }
+
+    class processInstanceMatcherForCloseWorkflow extends ArgumentMatcher<ProcessInstance> {
+
+        public static final String APPROVAL_COMMENTS = "approvalComments";
+        public static final String STATE_ID = "stateId";
+        private ProcessInstance expectedProcessInstance;
+
+        public processInstanceMatcherForCloseWorkflow(ProcessInstance expectedProcessInstance) {
+
+            this.expectedProcessInstance = expectedProcessInstance;
+        }
+
+        @Override
+        public boolean matches(Object o) {
+            final ProcessInstance actualProcessInstance = (ProcessInstance) o;
+            return expectedProcessInstance.getAction().equals(actualProcessInstance.getAction())&&
+                    expectedProcessInstance.getAssignee().equals(actualProcessInstance.getAssignee()) &&
+                    expectedProcessInstance.getBusinessKey().equals(actualProcessInstance.getBusinessKey()) &&
+                    expectedProcessInstance.getType().equals(actualProcessInstance.getType()) &&
+                    expectedProcessInstance.getDescription().equals(actualProcessInstance.getDescription()) &&
+                    expectedProcessInstance.getSenderName().equals(actualProcessInstance.getSenderName()) &&
+                    isValuesValid(actualProcessInstance);
+        }
+
+        private boolean isValuesValid(ProcessInstance processInstance){
+            Map<String,Attribute> attributesMap =  processInstance.getValues();
+            if(attributesMap.get(APPROVAL_COMMENTS).getValues().size() != 1)
+                return false;
+            Value comments = attributesMap.get(APPROVAL_COMMENTS).getValues().get(0);
+            if(attributesMap.get(STATE_ID).getValues().size() != 1)
+                return false;
+            Value state = attributesMap.get(STATE_ID).getValues().get(0);
+            return (comments.getName().equals("complaint closed") && state.getName().equals("119"));
         }
     }
 
