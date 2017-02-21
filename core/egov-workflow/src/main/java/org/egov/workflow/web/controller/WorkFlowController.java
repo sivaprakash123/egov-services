@@ -19,11 +19,6 @@ public class WorkFlowController {
     @Autowired
     private Workflow workflow;
 
-    // @InitBinder("processInstance")
-    // protected void initBinder(WebDataBinder binder) {
-    // binder.addValidators(new ProcessInstanceValidator());
-    // }
-
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProcessInstance startWorkflow(@RequestBody final ProcessInstance processInstance) {
         String tenantId = processInstance.getRequestInfo().getTenantId();

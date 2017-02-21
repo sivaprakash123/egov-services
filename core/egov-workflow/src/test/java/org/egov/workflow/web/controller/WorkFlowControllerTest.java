@@ -1,19 +1,5 @@
 package org.egov.workflow.web.controller;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import org.apache.commons.io.IOUtils;
 import org.egov.workflow.domain.model.RequestContext;
 import org.egov.workflow.repository.entity.Task;
@@ -21,12 +7,26 @@ import org.egov.workflow.service.Workflow;
 import org.egov.workflow.web.contract.ProcessInstance;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(WorkFlowController.class)
@@ -41,8 +41,12 @@ public class WorkFlowControllerTest {
 
     @Test
     public void test_should_accept_correlation_id() throws Exception {
-        when(workflow.start(eq(TENANT_ID), any(ProcessInstance.class)))
-                .thenReturn(new ProcessInstance());
+        final ProcessInstance expectedProcessInstance = ProcessInstance.builder()
+                .action("CREATE")
+                .build();
+
+        when(workflow.start(eq(TENANT_ID), argThat(new ProcessInstanceMatcher(expectedProcessInstance))))
+                .thenReturn(expectedProcessInstance);
 
         mockMvc.perform(post("/create")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
@@ -63,7 +67,6 @@ public class WorkFlowControllerTest {
         }
     }
 
-
     @Test
     public void testGetWorkFlowHistoryFailsWithoutJurisdictionId() throws Exception {
         mockMvc.perform(get("/history")).andExpect(status().isBadRequest());
@@ -82,7 +85,7 @@ public class WorkFlowControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(content().json(getFileContents("historyResponse.json")));
-        
+
         assertEquals("someId", RequestContext.getId());
     }
 
@@ -102,6 +105,24 @@ public class WorkFlowControllerTest {
                 //.createdDate(new Date("2016-08-31T10:46:22.083"))
                 .build();
         return Arrays.asList(history1, history2);
+    }
+
+
+    class ProcessInstanceMatcher extends ArgumentMatcher<ProcessInstance> {
+
+        private ProcessInstance expectedProcessInstance;
+
+        public ProcessInstanceMatcher(ProcessInstance expectedProcessInstance) {
+
+            this.expectedProcessInstance = expectedProcessInstance;
+        }
+
+        @Override
+        public boolean matches(Object o) {
+            final ProcessInstance actualProcessInstance = (ProcessInstance) o;
+            return expectedProcessInstance.getAction().equals(actualProcessInstance.getAction()) &&
+                    expectedProcessInstance.getAssignee().equals(actualProcessInstance.getAssignee());
+        }
     }
 
 }
