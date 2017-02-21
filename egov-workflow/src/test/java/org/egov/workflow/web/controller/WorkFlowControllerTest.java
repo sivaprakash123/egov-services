@@ -7,6 +7,7 @@ import org.egov.workflow.service.Workflow;
 import org.egov.workflow.web.contract.ProcessInstance;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -17,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,8 +38,12 @@ public class WorkFlowControllerTest {
 
     @Test
     public void test_should_accept_correlation_id() throws Exception {
-        when(workflow.start(eq(TENANT_ID), any(ProcessInstance.class)))
-                .thenReturn(new ProcessInstance());
+        final ProcessInstance expectedProcessInstance = ProcessInstance.builder()
+                .action("CREATE")
+                .build();
+
+        when(workflow.start(eq(TENANT_ID), argThat(new ProcessInstanceMatcher(expectedProcessInstance))))
+                .thenReturn(expectedProcessInstance);
 
         mockMvc.perform(post("/create")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
@@ -59,4 +64,22 @@ public class WorkFlowControllerTest {
         }
     }
 
+    class ProcessInstanceMatcher extends ArgumentMatcher<ProcessInstance> {
+
+        private ProcessInstance expectedProcessInstance;
+
+        public ProcessInstanceMatcher(ProcessInstance expectedProcessInstance) {
+
+            this.expectedProcessInstance = expectedProcessInstance;
+        }
+
+        @Override
+        public boolean matches(Object o) {
+            final ProcessInstance actualProcessInstance = (ProcessInstance) o;
+            return expectedProcessInstance.getAction().equals(actualProcessInstance.getAction()) &&
+                    expectedProcessInstance.getAssignee().equals(actualProcessInstance.getAssignee());
+        }
+    }
+
 }
+
