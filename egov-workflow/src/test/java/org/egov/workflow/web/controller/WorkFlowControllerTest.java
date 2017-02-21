@@ -4,7 +4,9 @@ package org.egov.workflow.web.controller;
 import org.apache.commons.io.IOUtils;
 import org.egov.workflow.domain.model.RequestContext;
 import org.egov.workflow.service.Workflow;
+import org.egov.workflow.web.contract.Attribute;
 import org.egov.workflow.web.contract.ProcessInstance;
+import org.egov.workflow.web.contract.Value;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -16,6 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.argThat;
@@ -37,9 +40,14 @@ public class WorkFlowControllerTest {
     private Workflow workflow;
 
     @Test
-    public void test_should_accept_correlation_id() throws Exception {
+    public void test_should_create_workflow() throws Exception {
         final ProcessInstance expectedProcessInstance = ProcessInstance.builder()
                 .action("CREATE")
+                .assignee(2L)
+                .businessKey("765")
+                .type("Complaint")
+                .description("Grievance registered successfully")
+                .senderName("harry")
                 .build();
 
         when(workflow.start(eq(TENANT_ID), argThat(new ProcessInstanceMatcher(expectedProcessInstance))))
@@ -66,6 +74,9 @@ public class WorkFlowControllerTest {
 
     class ProcessInstanceMatcher extends ArgumentMatcher<ProcessInstance> {
 
+        public static final String BOUNDARY_ID = "boundaryId";
+        public static final String COMPLAINT_TYPE_CODE = "complaintTypeCode";
+
         private ProcessInstance expectedProcessInstance;
 
         public ProcessInstanceMatcher(ProcessInstance expectedProcessInstance) {
@@ -77,7 +88,23 @@ public class WorkFlowControllerTest {
         public boolean matches(Object o) {
             final ProcessInstance actualProcessInstance = (ProcessInstance) o;
             return expectedProcessInstance.getAction().equals(actualProcessInstance.getAction()) &&
-                    expectedProcessInstance.getAssignee().equals(actualProcessInstance.getAssignee());
+                    expectedProcessInstance.getAssignee().equals(actualProcessInstance.getAssignee()) &&
+                    expectedProcessInstance.getBusinessKey().equals(actualProcessInstance.getBusinessKey()) &&
+                    expectedProcessInstance.getType().equals(actualProcessInstance.getType()) &&
+                    expectedProcessInstance.getDescription().equals(actualProcessInstance.getDescription()) &&
+                    expectedProcessInstance.getSenderName().equals(actualProcessInstance.getSenderName()) &&
+                    isValuesValid(actualProcessInstance);
+        }
+
+        private boolean isValuesValid(ProcessInstance processInstance){
+            Map<String,Attribute> attributesMap =  processInstance.getValues();
+            if(attributesMap.get(COMPLAINT_TYPE_CODE).getValues().size() != 1)
+                return false;
+            Value complaintType = attributesMap.get(COMPLAINT_TYPE_CODE).getValues().get(0);
+            if(attributesMap.get(BOUNDARY_ID).getValues().size() != 1)
+                return false;
+            Value boundary = attributesMap.get(BOUNDARY_ID).getValues().get(0);
+            return (complaintType.getName().equals("PHDMG") && boundary.getName().equals("173"));
         }
     }
 
