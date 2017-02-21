@@ -131,9 +131,9 @@ public class PgrWorkflowImpl implements Workflow {
             else
                 t.setSender("");
             if (stateHistory.getOwnerUser() != null) {
-
                 user = userService.getById(state.getOwnerUser());
                 t.setOwner(user.getUserName() + "::" + user.getName());
+<<<<<<< HEAD:core/egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
                 /*Department dept = departmentService.getDepartmentForUser(user.getId(), new Date());*/
                 Department dept = departmentService.getDepartmentForUser();
                 Attribute attr = new Attribute();
@@ -141,10 +141,15 @@ public class PgrWorkflowImpl implements Workflow {
                 attr.setCode("department");
 //                attr.getValues().add(dept.getName());
 //                t.getAttributes().put("department", putDepartmentValues(dept.getName()));
+=======
+                Department dept = departmentService.getDepartmentForUser(user.getId(), new Date());
+                t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName()));
+>>>>>>> 9783c21734a52172183f27eb288d83759eab7c91:egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
             } else {
                 /*EmployeeResponse emp = employeeService.getUserForPosition(stateHistory.getOwnerPosition(), new Date());*/
                 EmployeeResponse emp = employeeService.getUserForPosition();
                 t.setOwner(emp.getUsername() + "::" + emp.getName());
+<<<<<<< HEAD:core/egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
                 /*Department dept = positionService.getDepartmentByPosition(state.getOwnerPosition());*/
                 Department dept = positionService.getDepartmentByPosition();
                 Attribute attr = new Attribute();
@@ -152,6 +157,10 @@ public class PgrWorkflowImpl implements Workflow {
                 attr.setCode("department");
 //                attr.getValues().add(dept.getName());
                 //t.getAttributes().put("department", attr);
+=======
+                Department dept = positionService.getDepartmentByPosition(state.getOwnerPosition());
+                t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName()));
+>>>>>>> 9783c21734a52172183f27eb288d83759eab7c91:egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
             }
             tasks.add(t);
         }
@@ -166,6 +175,7 @@ public class PgrWorkflowImpl implements Workflow {
         if (state.getOwnerUser() != null) {
             user = userService.getById(state.getOwnerUser());
             t.setOwner(user.getUserName() + "::" + user.getName());
+<<<<<<< HEAD:core/egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
             /*Department dept = departmentService.getDepartmentForUser(user.getId(), new Date());*/
             Department dept = departmentService.getDepartmentForUser();
             Attribute attr = new Attribute();
@@ -173,10 +183,15 @@ public class PgrWorkflowImpl implements Workflow {
             attr.setCode("department");
 //            attr.getValues().add(dept.getName());
             //t.getAttributes().put("department", attr);
+=======
+            Department dept = departmentService.getDepartmentForUser(user.getId(), new Date());
+            t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName()));
+>>>>>>> 9783c21734a52172183f27eb288d83759eab7c91:egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
         } else {
             /*EmployeeResponse emp = employeeService.getUserForPosition(stateHistory.getOwnerPosition(), new Date());*/
             EmployeeResponse emp = employeeService.getUserForPosition();
             t.setOwner(emp.getUsername() + "::" + emp.getName());
+<<<<<<< HEAD:core/egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
             /*Department dept = positionService.getDepartmentByPosition(state.getOwnerPosition());*/
             Department dept = positionService.getDepartmentByPosition();
             Attribute attr = new Attribute();
@@ -185,11 +200,16 @@ public class PgrWorkflowImpl implements Workflow {
 //            attr.setValues(new ArrayList<String>());
 //            attr.getValues().add(dept.getName());
             //t.getAttributes().put("department", attr);
+=======
+            Department dept = positionService.getDepartmentByPosition(state.getOwnerPosition());
+            t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName()));
+>>>>>>> 9783c21734a52172183f27eb288d83759eab7c91:egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
         }
         tasks.add(t);
         return tasks;
     }
 
+<<<<<<< HEAD:core/egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
 
     private Attribute putDepartmentValues (String departmentName){
             Value value = new Value(DEPARTMENT, departmentName);
@@ -203,3 +223,16 @@ public class PgrWorkflowImpl implements Workflow {
 
 
     }
+=======
+    private Attribute putDepartmentValues(String departmentName){
+        Value value = new Value(DEPARTMENT, departmentName);
+        List<Value> values = Collections.singletonList(value);
+        Attribute attribute = new Attribute().builder()
+                .values(values)
+                .build();
+
+        return attribute;
+    }
+
+}
+>>>>>>> 9783c21734a52172183f27eb288d83759eab7c91:egov-workflow/src/main/java/org/egov/workflow/service/PgrWorkflowImpl.java
