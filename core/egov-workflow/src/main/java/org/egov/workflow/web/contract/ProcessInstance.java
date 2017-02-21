@@ -1,12 +1,14 @@
 package org.egov.workflow.web.contract;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
+
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 public class ProcessInstance {
@@ -14,7 +16,7 @@ public class ProcessInstance {
     @JsonProperty("RequestInfo")
     private RequestInfo requestInfo = null;
 
-    @JsonProperty("object_id")
+    @JsonProperty("objectId")
     @Setter
     private String id = null;
 
@@ -25,10 +27,10 @@ public class ProcessInstance {
     private String description = null;
 
     @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
-    @JsonProperty("created_Date")
+    @JsonProperty("createdDate")
     private Date createdDate = null;
 
-    @JsonProperty("last_updated")
+    @JsonProperty("lastupdated")
     private Date lastupdatedSince = null;
 
     @JsonProperty("status")
@@ -37,7 +39,7 @@ public class ProcessInstance {
     @JsonProperty("action")
     private String action = null;
 
-    @JsonProperty("business_key")
+    @JsonProperty("businesskey")
     private String businessKey = null;
 
     @Setter
@@ -47,17 +49,19 @@ public class ProcessInstance {
     @JsonProperty("group")
     private String group = null;
 
-    @JsonProperty("sender_name")
+    @JsonProperty("senderName")
     private String senderName = null;
 
-    @Setter
-    @JsonProperty("state_id")
-    private Long stateId;
-
-    @JsonProperty("state_details")
-    private String stateDetails;
-
     @JsonProperty("values")
-    private Map<String, String> values;
+    private Map<String, Attribute> values;
+    
+    //To be used to fetch single value attributes
+    public String getValueForKey(String key){
+    	if(Objects.nonNull(values.get(key)))
+    		return values.get(key).getValues().get(0).getName();
+    	
+    	return "";
+    	
+    }
 
 }
