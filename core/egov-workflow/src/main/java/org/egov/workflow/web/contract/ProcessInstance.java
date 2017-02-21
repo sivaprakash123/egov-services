@@ -18,43 +18,43 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ProcessInstance {
 
     @JsonProperty("RequestInfo")
-    private RequestInfo requestInfo = null;
+    private RequestInfo requestInfo;
 
     @JsonProperty("objectId")
     @Setter
-    private String id = null;
+    private String id;
 
     @JsonProperty("type")
-    private String type = null;
+    private String type;
 
     @JsonProperty("description")
-    private String description = null;
+    private String description;
 
     @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss",timezone = "IST")
     @JsonProperty("createdDate")
-    private Date createdDate = null;
+    private Date createdDate;
 
     @JsonProperty("lastupdated")
-    private Date lastupdatedSince = null;
+    private Date lastupdatedSince;
 
     @JsonProperty("status")
-    private String status = null;
+    private String status;
 
     @JsonProperty("action")
-    private String action = null;
+    private String action;
 
-    @JsonProperty("businesskey")
-    private String businessKey = null;
+    @JsonProperty("businessKey")
+    private String businessKey;
 
     @Setter
     @JsonProperty("assignee")
-    private Long assignee = null;
+    private Long assignee;
 
     @JsonProperty("group")
-    private String group = null;
+    private String group;
 
     @JsonProperty("senderName")
-    private String senderName = null;
+    private String senderName;
 
     @JsonProperty("values")
     private Map<String, Attribute> values;
@@ -65,7 +65,6 @@ public class ProcessInstance {
     		return values.get(key).getValues().get(0).getName();
     	
     	return "";
-    	
     }
 
 }
