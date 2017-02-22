@@ -1,11 +1,11 @@
 package org.egov.user;
 
-import org.egov.user.interceptor.CorrelationIdInterceptor;
+
+import org.egov.user.web.interceptor.CorrelationIdInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.provider.token.TokenStore;

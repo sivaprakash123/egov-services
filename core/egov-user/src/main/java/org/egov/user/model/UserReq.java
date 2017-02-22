@@ -2,9 +2,10 @@ package org.egov.user.model;
 
 import java.util.Objects;
 
-import org.egov.user.entity.User;
+import org.egov.user.persistence.entity.User;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.egov.user.web.contract.RequestInfo;
 
 public class UserReq {
 	@JsonProperty("RequestInfo")

@@ -3,6 +3,7 @@ package org.egov.user.model;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.egov.user.web.contract.ResponseInfo;
 
 public class ErrorRes {
 	@JsonProperty("ResponseInfo")

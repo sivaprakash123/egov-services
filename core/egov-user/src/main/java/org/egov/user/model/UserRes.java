@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.egov.user.entity.User;
+import org.egov.user.persistence.entity.User;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.egov.user.web.contract.ResponseInfo;
 
 public class UserRes {
 	@JsonProperty("ResponseInfo")
