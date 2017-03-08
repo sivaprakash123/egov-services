@@ -1,8 +1,10 @@
-package org.egov.web.controller;
+package org.egov.crn.web.controller;
 
-import org.egov.web.contract.ComplaintRegistrationNumber;
-import org.egov.domain.service.CrnGeneratorService;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.egov.crn.domain.service.CrnGeneratorService;
+import org.egov.crn.web.contract.BaseRequest;
+import org.egov.crn.web.contract.ComplaintRegistrationNumber;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,8 +18,8 @@ public class CrnController {
         this.crnGeneratorService = crnGeneratorService;
     }
 
-    @GetMapping()
-    public ComplaintRegistrationNumber getCrn() {
+    @PostMapping()
+    public ComplaintRegistrationNumber getCrn(@RequestBody BaseRequest request) {
         return new ComplaintRegistrationNumber(crnGeneratorService.generate());
     }
 }

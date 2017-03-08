@@ -1,6 +1,7 @@
-package org.egov.web.controller;
+package org.egov.crn.web.controller;
 
-import org.egov.domain.service.CrnGeneratorService;
+import org.egov.Resources;
+import org.egov.crn.domain.service.CrnGeneratorService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.when;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,12 +28,16 @@ public class CrnControllerTest {
     @MockBean
     private CrnGeneratorService crnGeneratorService;
 
+    Resources resources = new Resources();
+
     @Test
     public void testGetCrn() throws Exception {
         when(crnGeneratorService.generate()).thenReturn("crn_value");
 
         mockMvc.perform(
-                get("/crn")
+                post("/crn")
+                        .contentType("application/json")
+                        .content(resources.getFileContents("generateCrnRequest.json"))
         )
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

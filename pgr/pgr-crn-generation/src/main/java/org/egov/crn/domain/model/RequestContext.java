@@ -1,8 +1,8 @@
-package org.egov.domain.model;
+package org.egov.crn.domain.model;
 
 public class RequestContext {
 
-    public static String CORRELATION_ID = "X-CORRELATION-ID";
+    public static String MESSAGE_ID = "MESSAGE-ID";
 
     private static final ThreadLocal<String> id = new ThreadLocal<>();
 

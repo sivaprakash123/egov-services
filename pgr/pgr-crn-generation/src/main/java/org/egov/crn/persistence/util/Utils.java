@@ -38,7 +38,7 @@
  *  In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
 
-package org.egov.persistence.util;
+package org.egov.crn.persistence.util;
 
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;

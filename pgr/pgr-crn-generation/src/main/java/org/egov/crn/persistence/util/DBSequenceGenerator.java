@@ -1,4 +1,4 @@
-package org.egov.persistence.util;
+package org.egov.crn.persistence.util;
 
 import org.hibernate.Query;
 import org.hibernate.Session;

@@ -1,4 +1,4 @@
-package org.egov.web.contract;
+package org.egov.crn.web.contract;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

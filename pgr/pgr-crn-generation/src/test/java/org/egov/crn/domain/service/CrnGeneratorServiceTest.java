@@ -1,8 +1,8 @@
-package org.egov.domain.service;
+package org.egov.crn.domain.service;
 
-import org.egov.persistence.util.DBSequenceGenerator;
-import org.egov.persistence.util.SequenceNumberGenerator;
-import org.egov.persistence.util.Utils;
+import org.egov.crn.persistence.util.DBSequenceGenerator;
+import org.egov.crn.persistence.util.SequenceNumberGenerator;
+import org.egov.crn.persistence.util.Utils;
 import org.hibernate.exception.SQLGrammarException;
 import org.junit.Before;
 import org.junit.Test;
