@@ -10,38 +10,36 @@ import org.egov.pgr.domain.model.AuthenticatedUser;
 import org.egov.pgr.domain.model.Complaint;
 
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
-public class SevaRequest {
-	@JsonProperty("RequestInfo")
-	private RequestInfo requestInfo;
+public class SevaRequest extends BaseRequest {
 
-	@JsonProperty("ServiceRequest")
-	private ServiceRequest serviceRequest;
+    @JsonProperty("ServiceRequest")
+    private ServiceRequest serviceRequest;
 
-	@JsonIgnore
-	public Complaint toDomainForUpdateRequest(AuthenticatedUser authenticatedUser) {
-		return serviceRequest.toDomainForUpdateRequest(authenticatedUser);
-	}
+    public SevaRequest(RequestInfo requestInfo, ServiceRequest serviceRequest) {
+        this.requestInfo = requestInfo;
+        this.serviceRequest = serviceRequest;
+    }
 
-	@JsonIgnore
-	public Complaint toDomainForCreateRequest(AuthenticatedUser authenticatedUser) {
-		return serviceRequest.toDomainForCreateRequest(authenticatedUser);
-	}
+    @JsonIgnore
+    public Complaint toDomainForUpdateRequest(AuthenticatedUser authenticatedUser) {
+        return serviceRequest.toDomainForUpdateRequest(authenticatedUser);
+    }
 
-	@JsonIgnore
-	public String getAuthToken() {
-		return requestInfo.getAuthToken();
-	}
+    @JsonIgnore
+    public Complaint toDomainForCreateRequest(AuthenticatedUser authenticatedUser) {
+        return serviceRequest.toDomainForCreateRequest(authenticatedUser);
+    }
 
-	public void update(Complaint complaint) {
-		// RequesterId should be populated in case of complaint update or close
-		if (StringUtils.isNotEmpty(requestInfo.getAuthToken()))
-			requestInfo.setRequesterId(complaint.getAuthenticatedUser().getId().toString());
-		else {
-			//This we need to remove and Find the anonymous user and set
-			requestInfo.setRequesterId("1");
-		}
-		serviceRequest.setCrn(complaint.getCrn());
-	}
+    @JsonIgnore
+    public String getAuthToken() {
+        return requestInfo.getAuthToken();
+    }
+
+    public void update(Complaint complaint) {
+        //RequesterId should be populated in case of complaint update or close
+        if(StringUtils.isNotEmpty(requestInfo.getAuthToken()))
+            requestInfo.setRequesterId(complaint.getAuthenticatedUser().getId().toString());
+        serviceRequest.setCrn(complaint.getCrn());
+    }
 }
