@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 public class BaseRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     protected RequestInfo requestInfo;
 }
