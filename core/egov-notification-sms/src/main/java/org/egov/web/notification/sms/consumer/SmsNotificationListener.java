@@ -5,6 +5,7 @@ import org.egov.web.notification.sms.models.RequestContext;
 import org.egov.web.notification.sms.services.SMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -22,9 +23,10 @@ public class SmsNotificationListener {
     @KafkaListener(id = "${kafka.topics.notification.sms.id}",
             topics = "${kafka.topics.notification.sms.name}",
             group = "${kafka.topics.notification.sms.group}")
-    public void process(SMSRequest request) {
+    public void process(@Payload SMSRequest request) {
         RequestContext.setId(UUID.randomUUID().toString());
         smsService.sendSMS(request.toDomain());
     }
 
 }
+
