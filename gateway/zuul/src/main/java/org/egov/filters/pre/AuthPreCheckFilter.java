@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import org.egov.wrapper.CustomRequestWrapper;
+import org.egov.wrapper.MultiReadRequestWrapper;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
@@ -77,12 +78,12 @@ public class AuthPreCheckFilter extends ZuulFilter {
     }
 
     private String getAuthTokenFromRequestBody(RequestContext ctx) throws IOException {
-        CustomRequestWrapper requestWrapper = new CustomRequestWrapper(ctx.getRequest());
+		MultiReadRequestWrapper requestWrapper = new MultiReadRequestWrapper(ctx.getRequest());
 
         ObjectMapper objectMapper = new ObjectMapper();
         TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
         };
-        HashMap<String, Object> requestBody = objectMapper.readValue(requestWrapper.getPayload(), typeRef);
+        HashMap<String, Object> requestBody = objectMapper.readValue(requestWrapper.getInputStream(), typeRef);
         HashMap<String, String> requestInfo = (HashMap<String, String>) requestBody.get("RequestInfo");
         if (requestInfo == null) {
             return null;
@@ -92,12 +93,12 @@ public class AuthPreCheckFilter extends ZuulFilter {
     }
 
     private void sanitizeAndSetRequest(RequestContext ctx, HashMap<String, Object> requestBody, ObjectMapper objectMapper,
-                                       CustomRequestWrapper requestWrapper) throws JsonProcessingException {
+									   MultiReadRequestWrapper requestWrapper) throws JsonProcessingException {
         HashMap<String, Object> requestInfo = (HashMap<String, Object>) requestBody.get("RequestInfo");
 
         requestInfo.remove("userInfo");
         requestBody.put("RequestInfo", requestInfo);
-        requestWrapper.setPayload(objectMapper.writeValueAsString(requestBody));
+        requestWrapper.setPayload(objectMapper.writeValueAsBytes(requestBody));
         ctx.setRequest(requestWrapper);
     }
 

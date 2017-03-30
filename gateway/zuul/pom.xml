@@ -87,6 +87,7 @@
                                     <excludes>
                                         <exclude>org.egov.ZuulGatewayApplication</exclude>
                                         <exclude>org.egov.contract.*</exclude>
+                                        <exclude>org.egov.wrapper.*</exclude>
                                     </excludes>
                                     <limits>
                                         <limit>
