@@ -17,7 +17,6 @@ import static org.egov.constants.RequestContextConstants.USER_INFO_KEY;
 
 public class RbacFilter extends ZuulFilter{
 
-    private ProxyRequestHelper helper = new ProxyRequestHelper();
     private List<String> rbacWhitelist;
     public RbacFilter(List<String> rbacWhitelist){
         this.rbacWhitelist = rbacWhitelist;
@@ -32,8 +31,8 @@ public class RbacFilter extends ZuulFilter{
     @Override
     public boolean shouldFilter() {
         RequestContext ctx = RequestContext.getCurrentContext();
-        boolean shoudDoAuth = ctx.getBoolean("shouldDoAuth");
-        return shoudDoAuth && rbacWhitelist.stream().anyMatch(url -> ctx.getRequest().getRequestURI().contains(url));
+        boolean shouldDoAuth = ctx.getBoolean("shouldDoAuth");
+        return shouldDoAuth && rbacWhitelist.stream().anyMatch(url -> ctx.getRequest().getRequestURI().contains(url));
     }
 
     @Override
