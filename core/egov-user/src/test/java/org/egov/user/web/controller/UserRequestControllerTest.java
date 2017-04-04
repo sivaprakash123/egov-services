@@ -7,6 +7,7 @@ import org.egov.user.domain.exception.OtpValidationPendingException;
 import org.egov.user.domain.exception.UserNotFoundException;
 import org.egov.user.domain.model.Role;
 import org.egov.user.domain.model.User;
+import org.egov.user.domain.service.TokenService;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.domain.model.enums.BloodGroup;
 import org.egov.user.domain.model.enums.Gender;
@@ -44,6 +45,9 @@ public class UserRequestControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private TokenService tokenService;
 
     @Test
     @WithMockUser
@@ -141,7 +145,7 @@ public class UserRequestControllerTest {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Test
     @WithMockUser
     public void testShouldUpdateACitizen() throws Exception {
@@ -156,7 +160,7 @@ public class UserRequestControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(content().json(getFileContents("updateValidatedCitizenSuccessResponse.json")));
     }
-    
+
     @Test
     @WithMockUser
     public void testShouldThrowErrorWhileUpdatingWithDuplicateCitizen() throws Exception {
@@ -172,7 +176,7 @@ public class UserRequestControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(content().json(getFileContents("updateCitizenUnsuccessfulResponse.json")));
     }
-    
+
     @Test
     @WithMockUser
     public void testShouldThrowErrorWhileUpdatingWithInvalidCitizen() throws Exception {

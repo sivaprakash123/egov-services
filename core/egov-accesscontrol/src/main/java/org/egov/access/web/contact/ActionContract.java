@@ -51,6 +51,7 @@ public class ActionContract {
                     .queryParams(action.getQueryParams())
                     .orderNumber(action.getOrderNumber())
                     .parentModule(action.getParentModule())
+                    .serviceCode(action.getServiceCode())
                     .displayName(action.getDisplayName()).build();
             actionsContractList.add(actionContract);
         }
@@ -58,4 +59,4 @@ public class ActionContract {
         return actionsContractList;
     }
 
-  }
+}
