@@ -29,32 +29,23 @@ public class RbacFilterTest {
 
     @Test
     public void testThatFilterOrderIs3() throws Exception {
-        assertThat(rbacFilter.filterOrder(), is(3));
+        assertThat(rbacFilter.filterOrder(), is(4));
     }
 
     @Test
-    public void testThatFilterShouldNotRunWhenAuthIsNotRequired() throws Exception {
+    public void testThatFilterShouldNotRunWhenRbacIsNotRequired() throws Exception {
         RequestContext ctx = RequestContext.getCurrentContext();
-        ctx.set("shouldDoAuth", false);
+        ctx.set("shouldDoRbac", false);
         assertFalse(rbacFilter.shouldFilter());
     }
 
     @Test
     public void testThatFilterShouldNotRunWhenRequestUriIsNotInRBACWhitelist() throws Exception {
         RequestContext ctx = RequestContext.getCurrentContext();
-        ctx.set("shouldDoAuth", true);
+        ctx.set("shouldDoRbac", true);
         request.setRequestURI("/hr-masters/do/something");
         ctx.setRequest(request);
         assertFalse(rbacFilter.shouldFilter());
-    }
-
-    @Test
-    public void testThatFilterShouldRunWhenAuthIsRequiredAndRequestUriIsInRBACWhitelist() throws Exception {
-        RequestContext ctx = RequestContext.getCurrentContext();
-        ctx.set("shouldDoAuth", true);
-        request.setRequestURI("/pgr/seva");
-        ctx.setRequest(request);
-        assertTrue(rbacFilter.shouldFilter());
     }
 
     @Test

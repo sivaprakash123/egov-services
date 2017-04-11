@@ -2,18 +2,12 @@ package org.egov.filters.pre;
 
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
-import org.apache.commons.io.IOUtils;
-import org.egov.contract.Action;
 import org.egov.contract.User;
-import org.springframework.cloud.netflix.zuul.filters.ProxyRequestHelper;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
-import static org.egov.constants.RequestContextConstants.ERROR_CODE_KEY;
-import static org.egov.constants.RequestContextConstants.ERROR_MESSAGE_KEY;
-import static org.egov.constants.RequestContextConstants.USER_INFO_KEY;
+import static org.egov.constants.RequestContextConstants.*;
 
 public class RbacFilter extends ZuulFilter{
 
@@ -26,13 +20,12 @@ public class RbacFilter extends ZuulFilter{
     public String filterType() {return "pre";}
 
     @Override
-    public int filterOrder() {return 3;}
+    public int filterOrder() {return 4;}
 
     @Override
     public boolean shouldFilter() {
         RequestContext ctx = RequestContext.getCurrentContext();
-        boolean shouldDoAuth = ctx.getBoolean("shouldDoAuth");
-        return shouldDoAuth && rbacWhitelist.stream().anyMatch(url -> ctx.getRequest().getRequestURI().contains(url));
+        return ctx.getBoolean("shoulDoRbac");
     }
 
     @Override

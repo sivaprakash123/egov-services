@@ -3,6 +3,7 @@ package org.egov;
 import org.egov.filters.pre.AuthFilter;
 import org.egov.filters.pre.AuthPreCheckFilter;
 import org.egov.filters.pre.RbacFilter;
+import org.egov.filters.pre.RbacPreCheckFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -56,5 +57,12 @@ public class ZuulGatewayApplication {
     @Bean
     public RbacFilter rbacFilter() {
         return new RbacFilter(new ArrayList<>(Arrays.asList(rbacWhiteList)));
+    }
+
+    @Bean
+    public RbacPreCheckFilter rbacCheckFilter() {
+        return new RbacPreCheckFilter(new HashSet<>(Arrays.asList(openEndpointsWhitelist)),
+            new HashSet<>(Arrays.asList(anonymousEndpointsWhitelist)),
+            new ArrayList<>(Arrays.asList(rbacWhiteList)));
     }
 }

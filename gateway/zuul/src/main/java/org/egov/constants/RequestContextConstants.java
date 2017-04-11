@@ -14,4 +14,6 @@ public class RequestContextConstants {
     public static final String CORRELATION_ID_FIELD_NAME = "correlationId";
     public static final String CORRELATION_ID_HEADER_NAME = "x-correlation-id";
     public static final String CORRELATION_ID_KEY = "CORRELATION_ID";
+    public static final String RBAC_BOOLEAN_FLAG_NAME = "shouldDoRbac";
+    public static final String SKIP_RBAC = "RBAC check skipped";
 }
