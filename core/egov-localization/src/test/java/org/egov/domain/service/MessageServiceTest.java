@@ -32,7 +32,38 @@ public class MessageServiceTest {
     private MessageService messageService;
 
     @Test
-    public void test_should_get_all_messages_for_given_locale_and_tenant() {
+    public void test_should_augment_messages_for_given_tenant_with_non_overridden_default_messages() {
+        String tenantId = "a";
+
+        final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
+        Message defaultMessage1 = Message.builder()
+            .code("code1")
+            .locale(ENGLISH_INDIA)
+            .message("default message1")
+            .tenant(defaultTenant)
+            .build();
+        List<Message> defaultEnglishMessages = Collections.singletonList(defaultMessage1);
+        Message tenantMessage1 = Message.builder()
+            .code("code2")
+            .message("marathi message for tenant a")
+            .locale(MR_IN)
+            .tenant(new Tenant("a"))
+            .build();
+        List<Message> marathiMessagesForGivenTenant = Collections.singletonList(tenantMessage1);
+        when(messageRepository.findByTenantIdAndLocale("default", ENGLISH_INDIA))
+            .thenReturn(defaultEnglishMessages);
+        when(messageRepository.findByTenantIdAndLocale("a", MR_IN))
+            .thenReturn(marathiMessagesForGivenTenant);
+
+        List<Message> actualMessages = messageService.getMessages(MR_IN, new Tenant(tenantId));
+
+        assertEquals(2, actualMessages.size());
+        assertEquals("code1", actualMessages.get(0).getCode());
+        assertEquals("code2", actualMessages.get(1).getCode());
+    }
+
+    @Test
+    public void test_should_get_messages_with_precedence_based_on_tenant_hierarchy() {
         String tenantId = "a.b.c";
 
         final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
@@ -107,10 +138,12 @@ public class MessageServiceTest {
     }
 
     @Test
-    public void test_should_save_all_entity_messages() {
+    public void test_should_save_messages() {
         List<Message> modelMessages = getMessages();
         when(messageRepository.saveAllEntities(getEntityMessages())).thenReturn(modelMessages);
+
         List<Message> messages = messageService.saveAllEntityMessages(getEntityMessages());
+
         assertThat(messages.size()).isEqualTo(4);
         List<Message> modelMessagesWhereLocalIsEnglish = messages.stream().filter(message -> message.getLocale()
             .equals(ENGLISH_INDIA)).collect(Collectors.toList());
