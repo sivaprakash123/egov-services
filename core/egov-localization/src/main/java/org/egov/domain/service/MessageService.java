@@ -6,14 +6,16 @@ import java.util.stream.Stream;
 
 import org.egov.persistence.repository.MessageRepository;
 import org.egov.domain.model.Message;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MessageService {
     private static final String EN_IN = "en_IN";
-    @Autowired
     private MessageRepository messageRepository;
+
+    public MessageService(MessageRepository messageRepository) {
+        this.messageRepository = messageRepository;
+    }
 
     public List<Message> getMessagesAsPerLocale(String locale, String tenantId) {
 
@@ -31,9 +33,11 @@ public class MessageService {
             .map(Message::getCode)
             .collect(Collectors.toList());
 
-        List<String> codesMissingFromLocalLanguage = findMissingCodesInLocalLanguage(messageCodesInLocalLanguage, messageCodesInEnglish);
+        List<String> codesMissingFromLocalLanguage =
+            findMissingCodesInLocalLanguage(messageCodesInLocalLanguage, messageCodesInEnglish);
 
-        List<Message> missingMessages = getMissingMessagesInLocalLanguage(codesMissingFromLocalLanguage, messagesInEnglish);
+        List<Message> missingMessages =
+            getEnglishMessagesForCodesNotPresentInLocalLanguage(codesMissingFromLocalLanguage, messagesInEnglish);
 
         return Stream.concat(messagesInLocalLanguage.stream(), missingMessages.stream()).collect(Collectors.toList());
     }
@@ -44,7 +48,7 @@ public class MessageService {
             .collect(Collectors.toList());
     }
 
-    private List<Message> getMissingMessagesInLocalLanguage(List<String> codes, List<Message> messagesInEnglish) {
+    private List<Message> getEnglishMessagesForCodesNotPresentInLocalLanguage(List<String> codes, List<Message> messagesInEnglish) {
         return messagesInEnglish.stream()
             .filter(message -> codes.contains(message.getCode()))
             .collect(Collectors.toList());

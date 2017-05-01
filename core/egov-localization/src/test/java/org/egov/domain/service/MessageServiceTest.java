@@ -31,7 +31,6 @@ public class MessageServiceTest {
     @InjectMocks
     private MessageService messageService;
 
-
     @Test
     public void test_should_get_all_messages_when_locale_is_other_than_english() {
 

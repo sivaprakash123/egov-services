@@ -5,8 +5,9 @@ import lombok.*;
 import javax.persistence.*;
 
 @Entity
-@Data
 @Table(name = "message")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
