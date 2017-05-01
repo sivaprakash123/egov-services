@@ -19,16 +19,16 @@ public class Tenant {
     @Getter
     private String tenantId;
 
-    public List<String> getTenantHierarchy() {
-        final ArrayList<String> tenantHierarchy = new ArrayList<>();
+    public List<Tenant> getTenantHierarchy() {
+        final ArrayList<Tenant> tenantHierarchy = new ArrayList<>();
         final int tenantDepth = StringUtils.countMatches(tenantId, NAMESPACE_SEPARATOR);
-        tenantHierarchy.add(tenantId);
+        tenantHierarchy.add(new Tenant(tenantId));
         for (int index = tenantDepth; index >= 1; index--) {
             final String tenant =
                 tenantId.substring(0, StringUtils.ordinalIndexOf(tenantId, NAMESPACE_SEPARATOR, index));
-            tenantHierarchy.add(tenant);
+            tenantHierarchy.add(new Tenant(tenant));
         }
-        tenantHierarchy.add(DEFAULT_TENANT);
+        tenantHierarchy.add(new Tenant(DEFAULT_TENANT));
         return tenantHierarchy;
     }
 

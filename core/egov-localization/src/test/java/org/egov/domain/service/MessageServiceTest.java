@@ -3,6 +3,7 @@ package org.egov.domain.service;
 
 import org.egov.domain.model.Message;
 import org.egov.domain.model.Tenant;
+import org.egov.persistence.repository.MessageCacheRepository;
 import org.egov.persistence.repository.MessageRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,10 +14,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -27,6 +29,9 @@ public class MessageServiceTest {
 
     @Mock
     private MessageRepository messageRepository;
+
+    @Mock
+    private MessageCacheRepository messageCacheRepository;
 
     @InjectMocks
     private MessageService messageService;
@@ -50,16 +55,69 @@ public class MessageServiceTest {
             .tenant(new Tenant("a"))
             .build();
         List<Message> marathiMessagesForGivenTenant = Collections.singletonList(tenantMessage1);
-        when(messageRepository.findByTenantIdAndLocale("default", ENGLISH_INDIA))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("default"), ENGLISH_INDIA))
             .thenReturn(defaultEnglishMessages);
-        when(messageRepository.findByTenantIdAndLocale("a", MR_IN))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a"), MR_IN))
             .thenReturn(marathiMessagesForGivenTenant);
+        when(messageCacheRepository.getMessages(anyString(), any())).thenReturn(null);
+        when(messageCacheRepository.getComputedMessages(anyString(), any())).thenReturn(null);
 
         List<Message> actualMessages = messageService.getMessages(MR_IN, new Tenant(tenantId));
 
         assertEquals(2, actualMessages.size());
         assertEquals("code1", actualMessages.get(0).getCode());
         assertEquals("code2", actualMessages.get(1).getCode());
+    }
+
+    @Test
+    public void test_should_cache_computed_messages_post_computation() {
+        String tenantId = "a";
+
+        final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
+        Message defaultMessage1 = Message.builder()
+            .code("code1")
+            .locale(ENGLISH_INDIA)
+            .message("default message1")
+            .tenant(defaultTenant)
+            .build();
+        List<Message> defaultEnglishMessages = Collections.singletonList(defaultMessage1);
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("default"), ENGLISH_INDIA))
+            .thenReturn(defaultEnglishMessages);
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a"), MR_IN))
+            .thenReturn(Collections.emptyList());
+        when(messageCacheRepository.getMessages(anyString(), any())).thenReturn(null);
+        when(messageCacheRepository.getComputedMessages(anyString(), any())).thenReturn(null);
+
+        messageService.getMessages(MR_IN, new Tenant(tenantId));
+
+        verify(messageCacheRepository).cacheComputedMessages(MR_IN, new Tenant(tenantId), defaultEnglishMessages);
+    }
+
+    @Test
+    public void test_should_cache_messages_for_given_tenant_and_locale_post_data_store_retrieval() {
+        String tenantId = "a";
+
+        final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
+        Message defaultMessage1 = Message.builder()
+            .code("code1")
+            .locale(ENGLISH_INDIA)
+            .message("default message1")
+            .tenant(defaultTenant)
+            .build();
+        List<Message> defaultEnglishMessages = Collections.singletonList(defaultMessage1);
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("default"), ENGLISH_INDIA))
+            .thenReturn(defaultEnglishMessages);
+        final List<Message> tenantSpecificMessages = Collections.emptyList();
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a"), MR_IN))
+            .thenReturn(tenantSpecificMessages);
+        when(messageCacheRepository.getMessages(anyString(), any())).thenReturn(null);
+        when(messageCacheRepository.getComputedMessages(anyString(), any())).thenReturn(null);
+
+        messageService.getMessages(MR_IN, new Tenant(tenantId));
+
+        verify(messageCacheRepository).cacheMessages(ENGLISH_INDIA, new Tenant("default"), defaultEnglishMessages);
+        verify(messageCacheRepository).cacheMessages(MR_IN, new Tenant("default"), tenantSpecificMessages);
+        verify(messageCacheRepository).cacheMessages(MR_IN, new Tenant("a"), tenantSpecificMessages);
     }
 
     @Test
@@ -113,14 +171,16 @@ public class MessageServiceTest {
             .build();
         List<Message> marathiMessagesForTenantParent = Arrays.asList(tenantParentMessage1, tenantParentMessage2);
 
-        when(messageRepository.findByTenantIdAndLocale("default", ENGLISH_INDIA))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("default"), ENGLISH_INDIA))
             .thenReturn(defaultEnglishMessages);
-        when(messageRepository.findByTenantIdAndLocale("a.b.c", MR_IN))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a.b.c"), MR_IN))
             .thenReturn(marathiMessagesForGivenTenant);
-        when(messageRepository.findByTenantIdAndLocale("a.b", MR_IN))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a.b"), MR_IN))
             .thenReturn(marathiMessagesForTenantParent);
-        when(messageRepository.findByTenantIdAndLocale("a", MR_IN))
+        when(messageRepository.findByTenantIdAndLocale(new Tenant("a"), MR_IN))
             .thenReturn(Collections.emptyList());
+        when(messageCacheRepository.getMessages(anyString(), any())).thenReturn(null);
+        when(messageCacheRepository.getComputedMessages(anyString(), any())).thenReturn(null);
 
         List<Message> actualMessages = messageService.getMessages(MR_IN, new Tenant(tenantId));
 
@@ -138,33 +198,69 @@ public class MessageServiceTest {
     }
 
     @Test
-    public void test_should_save_messages() {
-        List<Message> modelMessages = getMessages();
-        when(messageRepository.saveAllEntities(getEntityMessages())).thenReturn(modelMessages);
+    public void test_should_return_computed_messages_from_cache_when_present() {
+        String tenantId = "a.b.c";
+        final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
+        Message defaultMessage1 = Message.builder()
+            .code("code1")
+            .locale(ENGLISH_INDIA)
+            .message("default message1")
+            .tenant(defaultTenant)
+            .build();
+        Message defaultMessage2 = Message.builder()
+            .code("code2")
+            .locale(ENGLISH_INDIA)
+            .message("default message2")
+            .tenant(defaultTenant)
+            .build();
+        List<Message> expectedMessages = Arrays.asList(defaultMessage1, defaultMessage2);
+        when(messageCacheRepository.getComputedMessages(MR_IN, new Tenant(tenantId)))
+            .thenReturn(expectedMessages);
 
-        List<Message> messages = messageService.saveAllEntityMessages(getEntityMessages());
+        List<Message> actualMessages = messageService.getMessages(MR_IN, new Tenant(tenantId));
 
-        assertThat(messages.size()).isEqualTo(4);
-        List<Message> modelMessagesWhereLocalIsEnglish = messages.stream().filter(message -> message.getLocale()
-            .equals(ENGLISH_INDIA)).collect(Collectors.toList());
-        List<Message> modelMessagesWhereLocalIsElseThanEnglish = messages.stream().filter(message -> message
-            .getLocale().equals(MR_IN)).collect(Collectors.toList());
-
-        assertThat(modelMessagesWhereLocalIsEnglish.size()).isEqualTo(2);
-        assertThat(modelMessagesWhereLocalIsElseThanEnglish.size()).isEqualTo(2);
+        assertEquals(2, actualMessages.size());
     }
 
-    private List<org.egov.persistence.entity.Message> getEntityMessages() {
+    @Test
+    public void test_should_return_messages_from_cache_when_present() {
+        String tenantId = "a";
 
-        org.egov.persistence.entity.Message message1 = org.egov.persistence.entity.Message.builder().message("OTP " +
-            "यशस्वीपणे प्रमाणित").code("core.msg.OTPvalidated").locale(MR_IN).tenantId(TENANT_ID).build();
-        org.egov.persistence.entity.Message message2 = org.egov.persistence.entity.Message.builder().message("प्रतिमा" +
-            " यशस्वीरित्या अपलोड").code("core.lbl.imageupload").locale(MR_IN).tenantId(TENANT_ID).build();
-        org.egov.persistence.entity.Message message3 = org.egov.persistence.entity.Message.builder().message
-            ("EnterMobileNumber").code("core.msg.entermobileno").locale(ENGLISH_INDIA).tenantId(TENANT_ID).build();
-        org.egov.persistence.entity.Message message4 = org.egov.persistence.entity.Message.builder().message("Enter " +
-            "fullname").code("core.msg.enterfullname").locale(ENGLISH_INDIA).tenantId(TENANT_ID).build();
-        return (Arrays.asList(message1, message2, message3, message4));
+        final Tenant defaultTenant = new Tenant(Tenant.DEFAULT_TENANT);
+        Message defaultMessage1 = Message.builder()
+            .code("code1")
+            .locale(ENGLISH_INDIA)
+            .message("default message1")
+            .tenant(defaultTenant)
+            .build();
+        List<Message> defaultEnglishMessages = Collections.singletonList(defaultMessage1);
+        Message tenantMessage1 = Message.builder()
+            .code("code2")
+            .message("marathi message for tenant a")
+            .locale(MR_IN)
+            .tenant(new Tenant("a"))
+            .build();
+        List<Message> marathiMessagesForGivenTenant = Collections.singletonList(tenantMessage1);
+        when(messageCacheRepository.getMessages(MR_IN, new Tenant("a")))
+            .thenReturn(marathiMessagesForGivenTenant);
+        when(messageCacheRepository.getMessages(ENGLISH_INDIA, new Tenant("default")))
+            .thenReturn(defaultEnglishMessages);
+        when(messageCacheRepository.getComputedMessages(anyString(), any())).thenReturn(null);
+
+        List<Message> actualMessages = messageService.getMessages(MR_IN, new Tenant(tenantId));
+
+        assertEquals(2, actualMessages.size());
+        assertEquals("code1", actualMessages.get(0).getCode());
+        assertEquals("code2", actualMessages.get(1).getCode());
+    }
+
+    @Test
+    public void test_should_save_messages() {
+        List<Message> modelMessages = getMessages();
+
+        messageService.createMessages(modelMessages);
+
+        verify(messageRepository).save(modelMessages);
     }
 
     private List<Message> getMessages() {

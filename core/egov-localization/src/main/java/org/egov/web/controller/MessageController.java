@@ -40,9 +40,15 @@ public class MessageController {
                                            BindingResult bindingResult) {
         if (bindingResult.hasErrors())
             throw new InvalidCreateMessageRequest(bindingResult.getFieldErrors());
-        final List<org.egov.persistence.entity.Message> entityMessages = messageRequest.toEntityMessages();
-        List<org.egov.domain.model.Message> domainMessages = messageService.saveAllEntityMessages(entityMessages);
-        return createResponse(domainMessages);
+        final List<org.egov.domain.model.Message> messages = messageRequest.toDomainMessages();
+        messageService.createMessages(messages);
+        return createResponse(messages);
+    }
+
+    @PostMapping("/cache-bust")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void clearMessagesCache() {
+        messageService.bustCache();
     }
 
     private MessagesResponse createResponse(List<org.egov.domain.model.Message> domainMessages) {
