@@ -15,7 +15,6 @@ public class MessageRepository {
         this.messageJpaRepository = messageJpaRepository;
     }
 
-
     public List<org.egov.domain.model.Message> findByTenantIdAndLocale(String tenantId, String locale) {
         return messageJpaRepository.findByTenantIdAndLocale(tenantId, locale).stream()
             .map(org.egov.persistence.entity.Message::toDomain).collect(Collectors.toList());

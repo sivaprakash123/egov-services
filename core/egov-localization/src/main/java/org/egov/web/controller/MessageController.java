@@ -1,5 +1,6 @@
 package org.egov.web.controller;
 
+import org.egov.domain.model.Tenant;
 import org.egov.domain.service.MessageService;
 
 import org.egov.web.contract.CreateMessagesRequest;
@@ -28,7 +29,8 @@ public class MessageController {
     @GetMapping()
     public MessagesResponse getMessagesForLocale(@RequestParam("locale") String locale,
                                                  @RequestParam("tenantId") String tenantId) {
-        List<org.egov.domain.model.Message> domainMessages = messageService.getMessagesAsPerLocale(locale, tenantId);
+        List<org.egov.domain.model.Message> domainMessages =
+            messageService.getMessages(locale, new Tenant(tenantId));
         return createResponse(domainMessages);
     }
 

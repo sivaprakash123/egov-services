@@ -3,6 +3,7 @@ package org.egov.web.controller;
 import org.apache.commons.io.IOUtils;
 import org.egov.TestConfiguration;
 import org.egov.domain.model.Message;
+import org.egov.domain.model.Tenant;
 import org.egov.domain.service.MessageService;
 
 
@@ -45,7 +46,7 @@ public class MessageControllerTest {
     @Test
     public void test_should_fetch_messages_for_given_locale() throws Exception {
         final List<Message> modelMessages = getModelMessages();
-        when(messageService.getMessagesAsPerLocale(LOCALE,TENANT_ID))
+        when(messageService.getMessages(LOCALE, new Tenant(TENANT_ID)))
             .thenReturn(modelMessages);
          mockMvc.perform(get("/messages")
             .param("tenantId", TENANT_ID)
@@ -105,13 +106,13 @@ public class MessageControllerTest {
         final Message message1 = Message.builder()
             .code("code1")
             .message("message1")
-            .tenantId("tenant123")
+            .tenant(new Tenant("tenant123"))
             .locale(LOCALE)
             .build();
         final Message message2 = Message.builder()
             .code("code2")
             .message("message2")
-            .tenantId("tenant123")
+            .tenant(new Tenant("tenant123"))
             .locale(LOCALE)
             .build();
         return Arrays.asList(message1, message2);

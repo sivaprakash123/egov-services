@@ -1,6 +1,7 @@
 package org.egov.persistence.entity;
 
 import lombok.*;
+import org.egov.domain.model.Tenant;
 
 import javax.persistence.*;
 
@@ -34,6 +35,11 @@ public class Message {
     private String tenantId;
 
     public org.egov.domain.model.Message toDomain() {
-        return new org.egov.domain.model.Message(code,message,tenantId,locale);
+        return org.egov.domain.model.Message.builder()
+            .code(code)
+            .message(message)
+            .locale(locale)
+            .tenant(new Tenant(tenantId))
+            .build();
     }
 }
