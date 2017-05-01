@@ -23,8 +23,6 @@ public class MessageRepository {
     public List<org.egov.domain.model.Message> saveAllEntities(List<org.egov.persistence.entity.Message> entityMessages) {
         messageJpaRepository.save(entityMessages);
         return  entityMessages.stream().map(org.egov.persistence.entity.Message::toDomain).collect(Collectors.toList());
-
-
     }
 
 
