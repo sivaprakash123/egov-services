@@ -98,7 +98,13 @@ public class PositionRepository {
 		return positionResponse.getPosition();
 	}
 
-	
-	
-	
+    public List<Position> getByEmployeeCode(final String code,RequestInfo requestInfo) {
+        String tenantId = requestInfo.getUserInfo().getTenantId();
+        RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+        return restTemplate.postForObject(positionsForEmployeeCodeUrl, requestInfoWrapper,
+                PositionResponse.class, code, tenantId).getPosition();
+    }
+
+
+
 }
