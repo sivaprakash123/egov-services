@@ -1,8 +1,12 @@
 package org.egov.workflow.web.contract;
 
-import lombok.Data;
+import lombok.*;
 
 @Data
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Position {
 
 	private Long id;

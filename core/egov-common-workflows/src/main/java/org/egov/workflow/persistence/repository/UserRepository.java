@@ -53,4 +53,12 @@ public class UserRepository {
 		String url = userHost + getUserByUserNameUrl;
 		return restTemplate.postForObject(url, request, UserResponse.class).getUser().get(0);
 	}*/
+
+	public UserResponse findUserByIdAndTenantId(Long userId,String tenantId) {
+		String url = String.format("%s%s", userHost, userServiceUrl);
+		UserRequest userRequest = UserRequest.builder().requestInfo(new RequestInfo())
+				.id(Collections.singletonList(userId)).tenantId(tenantId).build();
+
+		return restTemplate.postForObject(url, userRequest, UserResponse.class);
+	}
 }

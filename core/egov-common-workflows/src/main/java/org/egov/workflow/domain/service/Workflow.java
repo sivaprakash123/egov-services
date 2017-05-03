@@ -15,7 +15,7 @@ public interface Workflow {
 
     ProcessInstanceResponse start(ProcessInstanceRequest processInstanceRequest);
 
-    ProcessInstance end(String jurisdiction, ProcessInstance processInstance);
+    ProcessInstanceResponse end(ProcessInstanceRequest processInstanceRequest);
 
      ProcessInstance getProcess(String jurisdiction, ProcessInstance processInstance,final RequestInfo requestInfo);
 

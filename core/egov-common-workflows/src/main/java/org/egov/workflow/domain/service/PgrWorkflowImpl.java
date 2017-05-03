@@ -1,5 +1,6 @@
 package org.egov.workflow.domain.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -13,25 +14,20 @@ import org.egov.workflow.persistence.repository.EmployeeRepository;
 import org.egov.workflow.persistence.repository.UserRepository;
 import org.egov.workflow.persistence.service.ComplaintRouterService;
 import org.egov.workflow.persistence.service.StateService;
-import org.egov.workflow.web.contract.Attribute;
-import org.egov.workflow.web.contract.Designation;
-import org.egov.workflow.web.contract.Position;
-import org.egov.workflow.web.contract.ProcessInstance;
-import org.egov.workflow.web.contract.ProcessInstanceRequest;
-import org.egov.workflow.web.contract.ProcessInstanceResponse;
-import org.egov.workflow.web.contract.RequestInfo;
-import org.egov.workflow.web.contract.Task;
-import org.egov.workflow.web.contract.TaskRequest;
-import org.egov.workflow.web.contract.TaskResponse;
-import org.egov.workflow.web.contract.Value;
+import org.egov.workflow.web.contract.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PgrWorkflowImpl implements Workflow {
 
+	private static Logger LOG = LoggerFactory.getLogger(WorkflowMatrixImpl.class);
+
 	public static final String STATE_ID = "stateId";
 	public static final String DEPARTMENT = "department";
+	public static final String IN_PROGRESS = "IN PROGRESS";
 	private final ComplaintRouterService complaintRouterService;
 	private final StateService stateService;
 	private final EmployeeRepository employeeRepository;
@@ -40,37 +36,40 @@ public class PgrWorkflowImpl implements Workflow {
 
 	@Autowired
 	public PgrWorkflowImpl(final ComplaintRouterService complaintRouterService, final StateService stateService,
-			final EmployeeRepository employeeRepository, final UserRepository userRepository) {
+					   final EmployeeRepository employeeRepository, final UserRepository userRepository) {
 		this.complaintRouterService = complaintRouterService;
 		this.stateService = stateService;
 		this.employeeRepository = employeeRepository;
 		this.userRepository = userRepository;
 	}
 
-	@Override
+
+    @Override
 	public ProcessInstanceResponse start(final ProcessInstanceRequest processInstanceRequest) {
 		ProcessInstance processInstance = processInstanceRequest.getProcessInstance();
+		RequestInfo requestInfo = processInstanceRequest.getRequestInfo();
 		final State state = new State();
 		state.setType(processInstance.getType());
 		state.setSenderName(processInstance.getSenderName());
 		state.setStatus(State.StateStatus.INPROGRESS);
 		state.setValue(processInstance.getStatus());
-		state.setComments(processInstance.getComments());
-		state.setOwnerPosition(resolveAssignee(processInstance, processInstanceRequest.getRequestInfo()));
+		state.setComments("Complaint is created with CRN : " + processInstance.getValueForKey("crn"));
+		state.setNatureOfTask("Grievance");
+		Position position = resolveAssignee(processInstance,requestInfo);
+        position = Position.builder().id(1L).build();
+		state.setOwnerPosition(position.getId());
 		state.setExtraInfo(processInstance.getValueForKey("statusDetails"));
 		state.setDateInfo(processInstance.getCreatedDate());
-		// setAuditableFields(state,
-		// Long.valueOf(requestInfo.getRequesterId()));
+		state.setTenantId(processInstance.getTenantId());
+		setAuditableFields(state, Long.valueOf(processInstanceRequest.getRequestInfo().getUserInfo().getId()));
 		stateService.create(state);
 		final Value value = new Value(STATE_ID, String.valueOf(state.getId()));
 		final List<Value> values = Collections.singletonList(value);
 		final Attribute attribute = new Attribute(true, STATE_ID, "String", true, "This is the id of state", values);
 		processInstance.getAttributes().put(STATE_ID, attribute);
-		Position position = new Position();
-		position.setId(processInstance.getAssignee().getId());
 		processInstance.setAssignee(position);
-		ProcessInstanceResponse response = new ProcessInstanceResponse();
-		response.setProcessInstance(processInstance);
+
+		ProcessInstanceResponse response = ProcessInstanceResponse.builder().processInstance(processInstance).build();
 		return response;
 	}
 
@@ -83,141 +82,116 @@ public class PgrWorkflowImpl implements Workflow {
 		state.setLastModifiedBy(requesterId);
 	}
 
-	@Override
-	public ProcessInstance end(final String jurisdiction, final ProcessInstance processInstance) {
-
-		// ProcessInstance processInstance =
-		// processInstanceRequest.getProcessInstance();
+	public ProcessInstanceResponse end(final ProcessInstanceRequest processInstanceRequest) {
+		ProcessInstance processInstance = processInstanceRequest.getProcessInstance();
 		final Long stateId = Long.valueOf(processInstance.getValueForKey(STATE_ID));
-		final State state = stateService.findOne(stateId);
+		final State state = stateService.getStateByIdAndTenantId(stateId,processInstance.getTenantId());
 		if (Objects.nonNull(state)) {
 			state.addStateHistory(new StateHistory(state));
 			state.setStatus(State.StateStatus.ENDED);
-			state.setValue("closed");
+			state.setValue(processInstance.getStatus());
 			state.setComments(processInstance.getComments());
 			state.setSenderName(processInstance.getSenderName());
 			state.setDateInfo(processInstance.getCreatedDate());
+			state.setTenantId(processInstance.getTenantId());
 			// TODO OWNER POSITION condition to be checked
-			/*
-			 * UserResponse user = userRepository
-			 * .findUserById(Long.valueOf(processInstanceRequest.getRequestInfo(
-			 * ).getRequesterId())); if (user.isGrievanceOfficer()) {
-			 * state.setOwnerPosition(state.getOwnerPosition()); }
-			 */
-			// setAuditableFields(state,
-			// Long.valueOf(processInstanceRequest.getRequestInfo().getRequesterId()));
+			UserResponse user = userRepository
+					.findUserByIdAndTenantId(Long.valueOf(processInstanceRequest.getRequestInfo().getUserInfo().getId()),processInstance.getTenantId());
+			if (user.isGrievanceOfficer()) {
+				state.setOwnerPosition(state.getOwnerPosition());
+			}
+			setAuditableFields(state, Long.valueOf(processInstanceRequest.getRequestInfo().getUserInfo().getId()));
 			stateService.update(state);
-			processInstance.setId(state.getId().toString());
-			Position position = new Position();
-			position.setId(state.getOwnerPosition());
-			processInstance.setAssignee(position);
+			processInstance.setStateId(state.getId());
+			processInstance.setAssignee(Position.builder().id(state.getOwnerPosition()).build());
 		}
-		return processInstance;
+        ProcessInstanceResponse response = ProcessInstanceResponse.builder().processInstance(processInstance).build();
+		return response;
 	}
 
-	private Long resolveAssignee(final ProcessInstance processInstance, RequestInfo requestInfo) {
+	private Position resolveAssignee(final ProcessInstance processInstance,final RequestInfo requestInfo) {
 		final String complaintTypeCode = processInstance.getValueForKey("complaintTypeCode");
 		final Long boundaryId = Long.valueOf(processInstance.getValueForKey("boundaryId"));
+		final Long employeeId = Long.valueOf(processInstance.getValueForKey("userId"));
 		final Long firstTimeAssignee = null;
-		final Position response = complaintRouterService.getAssignee(boundaryId, complaintTypeCode, firstTimeAssignee,
-				requestInfo);
-		return response.getId();
+		final Position position = complaintRouterService.getAssignee(boundaryId, complaintTypeCode,
+				firstTimeAssignee,employeeId,processInstance.getTenantId(),requestInfo);
+		return position;
 	}
+
+	/*@Override
+	public Position getAssignee(final Long boundaryId, final String complaintTypeCode, final Long assigneeId,final String tenantId,null) {
+		return complaintRouterService.getAssignee(boundaryId, complaintTypeCode, assigneeId,tenantId,null);
+	}*/
 
 	@Override
-	public Position getAssignee(final Long boundaryId, final String complaintTypeCode, final Long assigneeId,
-			RequestInfo requestInfo) {
-		return complaintRouterService.getAssignee(boundaryId, complaintTypeCode, assigneeId, requestInfo);
+	public List<Task> getHistoryDetail(final String tenantId, final String workflowId) {
+		LOG.debug("Starting getHistoryDetail for " + workflowId + " for tenant " + tenantId);
+		final List<Task> tasks = new ArrayList<Task>();
+		Task t;
+		final State state = stateService.getStateByIdAndTenantId(Long.valueOf(workflowId),tenantId);
+		final Set<StateHistory> history = state.getHistory();
+		for (final StateHistory stateHistory : history) {
+			t = stateHistory.map();
+			tasks.add(t);
+		}
+		t = state.map();
+		tasks.add(t);
+		LOG.debug("getHistoryDetail for " + workflowId + " for tenant " + tenantId + "completed.");
+		if (LOG.isTraceEnabled()) {
+			LOG.trace(tasks.toString());
+		}
+		return tasks;
 	}
-
-	/*
-	 * @Override public List<Task> getHistoryDetail(final String tenantId, final
-	 * String workflowId) { final List<Task> tasks = new ArrayList<Task>(); Task
-	 * t; final State state = stateService.findOne(Long.valueOf(workflowId));
-	 * final Set<StateHistory> history = state.getHistory(); for (final
-	 * StateHistory stateHistory : history) { t = stateHistory.map(); Employee
-	 * user; User sender = null; if (stateHistory.getLastModifiedBy() > 0)
-	 * sender =
-	 * userRepository.findUserById(stateHistory.getLastModifiedBy()).getUser().
-	 * get(0); if (sender != null) t.setSender(sender.getUserName() + "::" +
-	 * sender.getName()); else t.setSender(""); if (stateHistory.getOwnerUser()
-	 * != null) {
-	 * 
-	 * user = employeeRepository.getEmployeeForUserId(state.getOwnerUser()).
-	 * getEmployees().get(0); t.setOwner(user.getUsername() + "::" +
-	 * user.getName()); final Department dept =
-	 * user.getAssignments().get(0).getDepartment();
-	 * t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName())); }
-	 * else { final Employee emp = employeeRepository
-	 * .getEmployeeForPosition(stateHistory.getOwnerPosition(), new
-	 * LocalDate()).getEmployees().get(0); t.setOwner(emp.getUsername() + "::" +
-	 * emp.getName()); final Department dept =
-	 * emp.getAssignments().get(0).getDepartment();
-	 * t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName())); }
-	 * tasks.add(t); } t = state.map(); Employee user; User sender = null; if
-	 * (state.getLastModifiedBy() > 0) sender =
-	 * userRepository.findUserById(state.getLastModifiedBy()).getUser().get(0);
-	 * if (sender != null) t.setSender(sender.getUserName() + "::" +
-	 * sender.getName()); else t.setSender(""); if (state.getOwnerUser() !=
-	 * null) { user =
-	 * employeeRepository.getEmployeeForUserId(state.getOwnerUser()).
-	 * getEmployees().get(0); t.setOwner(user.getUsername() + "::" +
-	 * user.getName()); final Department dept =
-	 * user.getAssignments().get(0).getDepartment();
-	 * t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName())); }
-	 * else { final Employee emp =
-	 * employeeRepository.getEmployeeForPosition(state.getOwnerPosition(), new
-	 * LocalDateTime()) .getEmployees().get(0); t.setOwner(emp.getUsername() +
-	 * "::" + emp.getName()); final Department dept =
-	 * emp.getAssignments().get(0).getDepartment();
-	 * t.getAttributes().put(DEPARTMENT, putDepartmentValues(dept.getName())); }
-	 * tasks.add(t); return tasks; }
-	 */
 
 	private Attribute putDepartmentValues(final String departmentName) {
 		final Value value = new Value(DEPARTMENT, departmentName);
 		final List<Value> values = Collections.singletonList(value);
-		final Attribute attribute = Attribute.builder().values(values).build();
 
-		return attribute;
+		return Attribute.builder().values(values).build();
 	}
 
-	@Override
+	/*@Override
 	public TaskResponse update(final TaskRequest taskRequest) {
 		Task task = taskRequest.getTask();
 		final Long stateId = Long.valueOf(task.getValueForKey(STATE_ID));
-		final State state = stateService.findOne(stateId);
+		final Long employeeId = Long.valueOf(task.getValueForKey("userId"));
+		final State state = stateService.getStateByIdAndTenantId(stateId,tenantId);
 		if (Objects.nonNull(state)) {
 			state.addStateHistory(new StateHistory(state));
 			state.setValue(task.getStatus());
 			state.setComments(task.getValueForKey("approvalComments"));
-			state.setSenderName(task.getSenderName());
-			state.setOwnerPosition(Long.valueOf(task.getAssignee().getId()));
+			state.setSenderName(task.getSender());
+			//Logic to handle escalation
+			if(null == task.getAssignee()) {
+				state.setOwnerPosition(getAssignee(null, task.getComplaintTypeCode(), task.getPreviousAssignee(),tenantId,employeeId).getId());
+				state.setPreviousOwner(task.getPreviousAssignee());
+				state.setValue(IN_PROGRESS);
+			}
+			else
+				state.setOwnerPosition(Long.valueOf(task.getAssignee()));
 			state.setExtraInfo(task.getValueForKey(STATE_DETAILS));
 			state.setDateInfo(task.getCreatedDate());
-			// TODO - Get these values from request info
-			state.setLastModifiedBy(00L);
-			state.setLastModifiedDate(new Date());
+			state.setTenantId(tenantId);
+			setAuditableFields(state, Long.valueOf(task.getRequestInfo().getUserInfo().getId()));
 			stateService.update(state);
 			if (state.getId() != null) {
 				task.setId(state.getId().toString());
-				Position position = new Position();
-				position.setId(state.getOwnerPosition());
-				task.setAssignee(position);
+				task.setAssignee(state.getOwnerPosition().toString());
 			}
 		}
 		TaskResponse response = new TaskResponse();
 		response.setTask(task);
 		return response;
 	}
-
+*/
 	@Override
 	public ProcessInstance getProcess(String jurisdiction, ProcessInstance processInstance, final RequestInfo requestInfo) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
+
 
 	@Override
 	public ProcessInstance update(String jurisdiction, ProcessInstance processInstance) {
@@ -226,6 +200,11 @@ public class PgrWorkflowImpl implements Workflow {
 	}
 
 	@Override
+	public TaskResponse update(TaskRequest taskRequest) {
+		return null;
+	}
+
+	/*@Override
 	public List<Task> getHistoryDetail(final String tenantId, final String workflowId) {
 		final List<Task> tasks = new ArrayList<Task>();
 		Task t;
@@ -238,11 +217,16 @@ public class PgrWorkflowImpl implements Workflow {
 		t = state.map();
 		tasks.add(t);
 		return tasks;
-	}
+	}*/
 
 	@Override
 	public List<Designation> getDesignations(Task t, String departmentName) {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object getAssignee(Long locationId, String complaintTypeId, Long assigneeId, RequestInfo requestInfo) {
 		return null;
 	}
 

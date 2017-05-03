@@ -5,6 +5,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.pgr.employee.enrichment.json.ObjectMapperFactory;
 import org.egov.pgr.employee.enrichment.repository.contract.Attribute;
+import org.egov.pgr.employee.enrichment.repository.contract.ProcessInstanceRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowResponse;
 
@@ -39,6 +40,7 @@ public class SevaRequest {
     private static final String EXPECTED_DATETIME = "expectedDatetime";
     private static final String TENANT_ID = "tenantId";
     private static final String ESCALATION_HOURS = "escalationHours";
+    private static final String USER_ID = "userId";
 
     private HashMap<String, Object> sevaRequestMap;
 
@@ -55,6 +57,8 @@ public class SevaRequest {
     public Long getAssignee() {
         return Long.valueOf(getValues().get(VALUES_ASSIGNEE_ID));
     }
+
+    public Long getEmployeeId() {return Long.valueOf(getValues().get(USER_ID));}
 
     private void setAssignee(String assignee) {
         getValues().put(VALUES_ASSIGNEE_ID, assignee);
@@ -80,7 +84,7 @@ public class SevaRequest {
         return (String) this.getServiceRequest().get(SERVICE_CODE);
     }
 
-    public WorkflowRequest getWorkFlowRequest() {
+    public ProcessInstanceRequest getWorkFlowRequest() {
         HashMap<String, Object> serviceRequest = getServiceRequest();
         RequestInfo requestInfo = getRequestInfo();
         HashMap<String, String> values = getValues();
@@ -92,14 +96,14 @@ public class SevaRequest {
             .assignee(getCurrentAssignee(values))
             .action(WorkflowRequest.Action.forComplaintStatus(values.get(STATUS)))
             .requestInfo(requestInfo)
-            .values(valuesToSet)
+            .attributes(valuesToSet)
             .status(values.get(STATUS))
             .type(WORKFLOW_TYPE)
             .businessKey(WORKFLOW_TYPE)
             .tenantId(getTenantId())
             .crn(crn);
 
-        return workflowRequestBuilder.build();
+       return new ProcessInstanceRequest(getRequestInfo(),workflowRequestBuilder.build());
     }
 
     @SuppressWarnings("unchecked")
@@ -135,6 +139,7 @@ public class SevaRequest {
         valuesToSet.put(VALUES_APPROVAL_COMMENT, Attribute.asStringAttr(VALUES_APPROVAL_COMMENT, values.get
             (VALUES_APPROVAL_COMMENT)));
         valuesToSet.put(DEPARTMENT_ID, Attribute.asStringAttr(DEPARTMENT_ID, values.get(DEPARTMENT_ID)));
+        valuesToSet.put(USER_ID,Attribute.asStringAttr(USER_ID,values.get(USER_ID)));
         return valuesToSet;
     }
 

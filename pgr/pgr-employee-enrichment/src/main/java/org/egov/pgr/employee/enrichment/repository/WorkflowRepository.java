@@ -1,5 +1,7 @@
 package org.egov.pgr.employee.enrichment.repository;
 
+import org.egov.pgr.employee.enrichment.model.SevaRequest;
+import org.egov.pgr.employee.enrichment.repository.contract.ProcessInstanceRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +29,8 @@ public class WorkflowRepository {
         this.updateWorkflowUrl = workflowHostname + updatePath;
     }
 
-    public WorkflowResponse create(WorkflowRequest workflowRequest) {
-        return restTemplate.postForObject(createWorkflowUrl, workflowRequest, WorkflowResponse.class);
+    public WorkflowResponse create(ProcessInstanceRequest processInstanceRequest) {
+        return restTemplate.postForObject(createWorkflowUrl, processInstanceRequest, WorkflowResponse.class);
     }
 
     public WorkflowResponse close(WorkflowRequest workflowRequest) {

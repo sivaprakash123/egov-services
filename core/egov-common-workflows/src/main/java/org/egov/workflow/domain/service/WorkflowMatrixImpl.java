@@ -1,17 +1,5 @@
 package org.egov.workflow.domain.service;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.transaction.Transactional;
-
 import org.egov.workflow.domain.exception.InvalidDataException;
 import org.egov.workflow.domain.exception.NoDataFoundException;
 import org.egov.workflow.domain.model.WorkflowConstants;
@@ -25,24 +13,16 @@ import org.egov.workflow.persistence.repository.PositionRepository;
 import org.egov.workflow.persistence.service.StateService;
 import org.egov.workflow.persistence.service.WorkFlowMatrixService;
 import org.egov.workflow.persistence.service.WorkflowTypesService;
-import org.egov.workflow.web.contract.Attribute;
-import org.egov.workflow.web.contract.Designation;
-import org.egov.workflow.web.contract.Employee;
-import org.egov.workflow.web.contract.Position;
-import org.egov.workflow.web.contract.ProcessInstance;
-import org.egov.workflow.web.contract.ProcessInstanceRequest;
-import org.egov.workflow.web.contract.ProcessInstanceResponse;
-import org.egov.workflow.web.contract.RequestInfo;
-import org.egov.workflow.web.contract.Task;
-import org.egov.workflow.web.contract.TaskRequest;
-import org.egov.workflow.web.contract.TaskResponse;
-import org.egov.workflow.web.contract.User;
-import org.egov.workflow.web.contract.Value;
-import org.egov.workflow.web.contract.WorkflowBean;
+import org.egov.workflow.web.contract.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class WorkflowMatrixImpl implements Workflow {
@@ -114,9 +94,13 @@ public class WorkflowMatrixImpl implements Workflow {
 		stateService.create(state);
 		processInstance = state.mapToProcess(processInstance);
 
-		ProcessInstanceResponse response = new ProcessInstanceResponse();
-		response.setProcessInstance(processInstance);
+        ProcessInstanceResponse response = ProcessInstanceResponse.builder().processInstance(processInstance).build();
 		return response;
+	}
+
+	@Override
+	public ProcessInstanceResponse end(ProcessInstanceRequest processInstanceRequest) {
+		return null;
 	}
 
 	private void updateAuditDetails(State s, User u) {
@@ -128,7 +112,7 @@ public class WorkflowMatrixImpl implements Workflow {
 		LOG.debug("Updating Logged in user Information complete. ");
 	}
 
-	private Position getInitiator() {
+/*	private Position getInitiator() {
 		Position position = null;
 		try {
 
@@ -139,8 +123,8 @@ public class WorkflowMatrixImpl implements Workflow {
 			LOG.error("Error while setting initiator position");
 		}
 		return position;
-	}
-
+	}*/
+/*
 	private Employee getEmp(Long userId) {
 		Employee emp = null;
 		try {
@@ -151,7 +135,7 @@ public class WorkflowMatrixImpl implements Workflow {
 			LOG.error("Error while setting initiator position");
 		}
 		return emp;
-	}
+	}*/
 
 	@Transactional
 	@Override
@@ -179,9 +163,7 @@ public class WorkflowMatrixImpl implements Workflow {
 		if (task.getAction().equalsIgnoreCase(WorkflowConstants.ACTION_REJECT)) {
 			ownerId = state.getInitiatorPosition();
 			if (ownerId != null) {
-				Position p = new Position();
-				p.setId(ownerId);
-				task.setAssignee(p);
+				task.setAssignee(Position.builder().id(ownerId).build());
 			}
 			// below logic required to show the messages only....
 			/*
@@ -226,7 +208,7 @@ public class WorkflowMatrixImpl implements Workflow {
 		return response;
 	}
 
-	private String getApproverName(final Position owner) {
+/*	private String getApproverName(final Position owner) {
 		String approverName = null;
 		try {
 			approverName = getEmp(1l).getName();
@@ -234,7 +216,7 @@ public class WorkflowMatrixImpl implements Workflow {
 			LOG.error("error while fetching users name");
 		}
 		return approverName;
-	}
+	}*/
 
 	private String getNextAction(final WorkflowBean workflowBean) {
 
@@ -293,7 +275,7 @@ public class WorkflowMatrixImpl implements Workflow {
 				processInstance.setOwner(positionRepository.getById(state.getOwnerUser(), requestInfo));
 
 			if (processInstance.getOwner() == null) {
-				Position p = new Position();
+				Position p = Position.builder().build();
 				if (state.getOwnerPosition() != null)
 					p.setId(state.getOwnerPosition());
 				else if (state.getOwnerUser() != null)
@@ -365,11 +347,7 @@ public class WorkflowMatrixImpl implements Workflow {
 		return tasks;
 	}
 
-	@Override
-	public ProcessInstance end(String jurisdiction, ProcessInstance processInstance) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+
 
 	@Override
 	public Object getAssignee(Long locationId, String complaintTypeId, Long assigneeId, RequestInfo requestInfo) {

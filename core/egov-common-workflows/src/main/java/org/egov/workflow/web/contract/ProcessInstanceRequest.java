@@ -3,8 +3,13 @@ package org.egov.workflow.web.contract;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
+import lombok.*;
 
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
 public @Data class ProcessInstanceRequest {
 	private RequestInfo requestInfo = new RequestInfo();
 

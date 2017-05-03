@@ -40,15 +40,18 @@ public class PositionRepository {
 
 		RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
 		String tenantId = "";
+        Long employeeId = null;
 		if (requestInfo != null) {
 			requestInfoWrapper.setRequestInfo(requestInfo);
-			if (requestInfo.getUserInfo() != null)
-			    tenantId = requestInfo.getUserInfo().getTenantId();
+			if (requestInfo.getUserInfo() != null) {
+                tenantId = requestInfo.getUserInfo().getTenantId();
+                employeeId = requestInfo.getUserInfo().getId();
+            }
 		} else
 			requestInfoWrapper.setRequestInfo(new RequestInfo());
 
-		PositionResponse positionResponse = restTemplate.postForObject(positionsByIdUrl, requestInfoWrapper,
-				PositionResponse.class, id, tenantId);
+        PositionResponse positionResponse = restTemplate.postForObject(positionsByIdUrl, requestInfoWrapper,
+                PositionResponse.class, employeeId, id, tenantId);
 		System.out.println(positionResponse);
 		Position position = positionResponse != null
 				? ((positionResponse.getPosition() != null && !positionResponse.getPosition().isEmpty())

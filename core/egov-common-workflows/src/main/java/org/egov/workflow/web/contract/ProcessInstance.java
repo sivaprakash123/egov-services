@@ -1,11 +1,6 @@
 package org.egov.workflow.web.contract;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -131,6 +126,13 @@ public class ProcessInstance {
 	private Map<String, Attribute> attributes = new HashMap<String, Attribute>();
 
 	private Long initiatorPosition;
+
+    public void setStateId(Long stateId){
+        Value value = new Value("stateId", String.valueOf(stateId));
+        List<Value> attributeValues = Collections.singletonList(value);
+        Attribute attribute = new Attribute(true, "stateId", "String", true, "This is the id of state",attributeValues);
+        attributes.put("stateId",attribute);
+    }
 
 	/*
 	 * @JsonIgnore public String getComments() { return

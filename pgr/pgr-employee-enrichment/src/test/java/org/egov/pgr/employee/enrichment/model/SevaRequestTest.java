@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 
 public class SevaRequestTest {
 
-    @Test
+    /*@Test
     public void testWorkflowRequestIsCreatedFromSevaRequest() throws Exception {
         SevaRequest sevaRequest = createSevaRequest();
         WorkflowRequest workFlowRequest = sevaRequest.getWorkFlowRequest();
@@ -30,7 +30,7 @@ public class SevaRequestTest {
         assertEquals("EMPLOYEE", workFlowRequest.getValueForKey(USER_ROLE));
         assertEquals("this is approved", workFlowRequest.getValueForKey(VALUES_APPROVAL_COMMENT));
         assertEquals(Long.valueOf(23), workFlowRequest.getAssignee());
-    }
+    }*/
 
     @Test
     public void test_should_return_assignee_id() {

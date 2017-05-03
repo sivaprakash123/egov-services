@@ -4,10 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 public class ComplaintTypeServiceResponse {
 
 	@JsonProperty("ComplaintType")
-	private ComplaintTypeResponse complaintType;
+	private List<ComplaintTypeResponse> complaintType;
+
+
 
 }

@@ -1,12 +1,13 @@
 package org.egov.workflow.web.contract;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Data
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PositionHierarchyResponse {
 
     private Long id;

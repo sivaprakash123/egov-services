@@ -5,6 +5,7 @@ import java.util.Map;
 import org.egov.pgr.employee.enrichment.model.SevaRequest;
 import org.egov.pgr.employee.enrichment.repository.ComplaintRestRepository;
 import org.egov.pgr.employee.enrichment.repository.WorkflowRepository;
+import org.egov.pgr.employee.enrichment.repository.contract.ProcessInstanceRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.ServiceRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowRequest;
 import org.egov.pgr.employee.enrichment.repository.contract.WorkflowResponse;
@@ -25,10 +26,11 @@ public class WorkflowService {
 	}
 
     public SevaRequest enrichWorkflow(SevaRequest sevaRequest) {
-        WorkflowRequest request = sevaRequest.getWorkFlowRequest();
+        ProcessInstanceRequest processInstanceRequest = sevaRequest.getWorkFlowRequest();
+        WorkflowRequest request = processInstanceRequest.getWorkflowRequest();
         WorkflowResponse workflowResponse = null;
         if (request.isCreate() && sevaRequest.isCreate()) {
-            workflowResponse = workflowRepository.create(request);
+            workflowResponse = workflowRepository.create(processInstanceRequest);
         } else if (request.isClosed()) {
             workflowResponse = workflowRepository.close(request);
         } else {

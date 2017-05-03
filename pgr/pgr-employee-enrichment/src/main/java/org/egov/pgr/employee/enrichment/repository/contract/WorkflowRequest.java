@@ -76,8 +76,7 @@ public class WorkflowRequest {
     @JsonProperty("sender_name")
     private String senderName;
 
-    @JsonProperty("values")
-    private Map<String, Attribute> values;
+    private Map<String, Attribute> attributes;
     
     @JsonProperty("service_request_id")
     private String crn;
@@ -85,8 +84,8 @@ public class WorkflowRequest {
     private String tenantId;
 
     public String getValueForKey(String key) {
-        if (Objects.nonNull(values.get(key)))
-            return values.get(key).getValues().get(0).getName();
+        if (Objects.nonNull(attributes.get(key)))
+            return attributes.get(key).getValues().get(0).getName();
         return "";
     }
     
