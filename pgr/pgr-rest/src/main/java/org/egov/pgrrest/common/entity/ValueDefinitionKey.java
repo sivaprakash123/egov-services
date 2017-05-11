@@ -12,10 +12,14 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public class ServiceDefinitionKey implements Serializable {
+public class ValueDefinitionKey implements Serializable {
 
-    private String code;
+    @Column(name = "key", nullable = false)
+    private String key;
+
+    @Column(name = "attributecode", nullable = false)
+    private String attributeCode;
+
     @Column(name = "tenantid", nullable = false)
     private String tenantId;
 }
-

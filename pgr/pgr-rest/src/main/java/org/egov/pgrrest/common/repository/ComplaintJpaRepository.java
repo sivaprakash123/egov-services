@@ -6,6 +6,8 @@ import javax.transaction.Transactional;
 import java.util.List;
 
 import org.egov.pgrrest.common.entity.Complaint;
+import org.egov.pgrrest.common.entity.ServiceDefinition;
+import org.egov.pgrrest.common.entity.ServiceDefinitionKey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
