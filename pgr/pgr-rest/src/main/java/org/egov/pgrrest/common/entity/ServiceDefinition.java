@@ -1,7 +1,6 @@
 package org.egov.pgrrest.common.entity;
 
 import lombok.*;
-import org.egov.pgrrest.common.model.*;
 import org.egov.pgrrest.common.model.AttributeDefinition;
 
 import javax.persistence.EmbeddedId;

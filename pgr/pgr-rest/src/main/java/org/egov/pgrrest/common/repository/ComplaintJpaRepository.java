@@ -1,19 +1,16 @@
 package org.egov.pgrrest.common.repository;
 
-import java.util.Date;
-
-import javax.transaction.Transactional;
-import java.util.List;
-
 import org.egov.pgrrest.common.entity.Complaint;
-import org.egov.pgrrest.common.entity.ServiceDefinition;
-import org.egov.pgrrest.common.entity.ServiceDefinitionKey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import javax.transaction.Transactional;
+import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface ComplaintJpaRepository extends JpaRepository<Complaint, Long>, JpaSpecificationExecutor<Complaint> {
