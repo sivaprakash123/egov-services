@@ -55,7 +55,7 @@ public class ResponseInfoFactory {
         String resMsgId = "placeholder"; // FIXME : Hard-coded
         String msgId = requestInfo.getMsgId();
         String responseStatus = success ? "successful" : "failed";
-
+a
         return new ResponseInfo(apiId, ver, ts, resMsgId, msgId, responseStatus);
     }
 
