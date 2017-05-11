@@ -23,4 +23,12 @@ public class ValueDefinition extends AbstractPersistable<ValueDefinitionKey> {
 
     @Column(name = "name")
     private String name;
+
+    public String getAttributeCode() {
+        return id.getAttributeCode();
+    }
+
+    public org.egov.pgrrest.common.model.ValueDefinition toDomain() {
+        return new org.egov.pgrrest.common.model.ValueDefinition(name, id.getKey());
+    }
 }

@@ -1,6 +1,7 @@
 package org.egov.pgrrest.common.entity;
 
 import lombok.*;
+import org.egov.pgrrest.common.model.ValueDefinition;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
@@ -16,6 +17,10 @@ import java.util.List;
 @Builder
 @Table(name = "attribute_definition")
 public class AttributeDefinition extends AbstractPersistable<AttributeDefinitionKey> {
+
+    private static final char YES = 'Y';
+    private static final char NO = 'N';
+
     @EmbeddedId
     private AttributeDefinitionKey id;
 
@@ -36,5 +41,30 @@ public class AttributeDefinition extends AbstractPersistable<AttributeDefinition
 
     @Column(name = "description")
     private String description;
+
+    public String getCode() {
+        return id.getCode();
+    }
+
+    public org.egov.pgrrest.common.model.AttributeDefinition toDomain(List<ValueDefinition> domainValues) {
+        return org.egov.pgrrest.common.model.AttributeDefinition.builder()
+            .code(getCode())
+            .dataType(dataType)
+            .readOnly(isReadOnly())
+            .required(isRequired())
+            .order(order)
+            .dataTypeDescription(dataTypeDescription)
+            .description(description)
+            .values(domainValues)
+            .build();
+    }
+
+    private boolean isRequired() {
+        return required == YES;
+    }
+
+    private boolean isReadOnly() {
+        return variable == NO;
+    }
 }
 
