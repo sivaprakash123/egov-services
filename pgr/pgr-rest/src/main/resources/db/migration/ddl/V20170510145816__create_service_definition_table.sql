@@ -34,7 +34,7 @@ PRIMARY KEY(servicecode, code, tenantid);
 ALTER TABLE attribute_definition ADD CONSTRAINT attribute_definition_fkey
 FOREIGN KEY (servicecode, tenantid) REFERENCES service_definition (code, tenantid);
 
-CREATE TABLE values_definition (
+CREATE TABLE value_definition (
     servicecode VARCHAR (256) NOT NULL,
     attributecode VARCHAR(50) NOT NULL,
     key VARCHAR(50) NOT NULL,
@@ -47,8 +47,8 @@ CREATE TABLE values_definition (
     lastmodifiedby bigint
 );
 
-ALTER TABLE values_definition ADD CONSTRAINT values_definition_pkey
+ALTER TABLE value_definition ADD CONSTRAINT value_definition_pkey
 PRIMARY KEY(attributecode, key, tenantid);
 
-ALTER TABLE values_definition ADD CONSTRAINT values_definition_attribute_definition_fkey
+ALTER TABLE value_definition ADD CONSTRAINT value_definition_attribute_definition_fkey
 FOREIGN KEY (servicecode, attributecode, tenantid) REFERENCES attribute_definition (servicecode, code, tenantid);

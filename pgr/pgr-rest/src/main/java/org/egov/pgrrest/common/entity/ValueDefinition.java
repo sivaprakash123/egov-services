@@ -13,7 +13,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "attribute_definition")
+@Table(name = "value_definition")
 public class ValueDefinition extends AbstractPersistable<ValueDefinitionKey> {
     @EmbeddedId
     private ValueDefinitionKey id;
