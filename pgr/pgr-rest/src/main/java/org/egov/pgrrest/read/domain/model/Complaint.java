@@ -74,8 +74,15 @@ public class Complaint {
     }
 
     public void validate() {
-        if (isLocationAbsent() || isComplainantAbsent() || isTenantIdAbsent() || isComplaintTypeAbsent()
-            || isDescriptionAbsent() || isCrnAbsent() || isReceivingCenterAbsent() || isReceivingModeAbsent() || descriptionLength()) {
+        if (isLocationAbsent()
+            || isComplainantAbsent()
+            || isTenantIdAbsent()
+            || isComplaintTypeAbsent()
+            || isDescriptionAbsent()
+            || isCrnAbsent()
+            || isReceivingCenterAbsent()
+            || isReceivingModeAbsent()
+            || descriptionLength()) {
             throw new InvalidComplaintException(this);
         }
     }

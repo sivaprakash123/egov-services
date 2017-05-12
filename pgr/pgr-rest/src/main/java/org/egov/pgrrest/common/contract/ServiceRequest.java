@@ -96,12 +96,16 @@ public class ServiceRequest {
     
     private Map<String, String> values = new HashMap<>();
 
-//  Short term hack - to support values and attribValues usage
+//  Short term feature flag - to support values and attribValues usage
 //  This flag should be set by the consumer for the service to consider attribValues instead of existing values field.
     @JsonProperty("isAttribValuesPopulated")
     private boolean attribValuesPopulated;
 
     private List<AttributeEntry> attribValues = new ArrayList<>();
+
+//  Short term feature flag - to support persisting to complaint table or new submission table.
+    @JsonProperty("isForNewSchema")
+    private boolean useNewSchema;
 
     public ServiceRequest(Complaint complaint) {
         crn = complaint.getCrn();
