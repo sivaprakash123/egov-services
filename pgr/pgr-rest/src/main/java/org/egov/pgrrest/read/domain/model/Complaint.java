@@ -39,10 +39,10 @@ public class Complaint {
     private boolean modifyComplaint;
     private String receivingMode;
     private String receivingCenter;
-    private String department;
+    private Long department;
     private Date lastAccessedTime;
     private String childLocation;
-    private String assignee;
+    private Long assignee;
     private String state;
     private String citizenFeedback;
 

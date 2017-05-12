@@ -2,14 +2,14 @@ CREATE TABLE submission
 (
   crn VARCHAR(32) NOT NULL,
   tenantid VARCHAR(256) NOT NULL,
-  escalation_date timestamp,
+  escalationdate timestamp,
   landmarkdetails VARCHAR(200),
   department bigint,
   requester bigint NOT NULL,
   assignee bigint,
-  lat double precision,
-  lng double precision,
-  latlngAddress VARCHAR(70),
+  latitude double precision,
+  longitude double precision,
+  address VARCHAR(70),
   location bigint,
   status VARCHAR(25),
   details VARCHAR(500) NOT NULL,
@@ -24,10 +24,21 @@ CREATE TABLE submission
 
 CREATE TABLE submission_attribute
 (
+  id bigint NOT NULL,
   crn VARCHAR(32) NOT NULL,
   code VARCHAR(50) NOT NULL,
-  key VARCHAR(50) NOT NULL
+  key VARCHAR(50)
 );
+
+ALTER TABLE submission_attribute ADD CONSTRAINT submission_attribute_pk PRIMARY KEY(id);
+
+CREATE SEQUENCE seq_submission_attribute
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
 
 
 -- Move this to attribute table

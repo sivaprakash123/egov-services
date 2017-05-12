@@ -118,7 +118,7 @@ public class ServiceRequestControllerTest {
         String location = "Election Ward No 1";
         String childLocation = "Gadu Veedhi";
         String stateId = "1";
-        String assigneeId = "2";
+        Long assigneeId = 2L;
         String address = null;
         List<String> mediaUrls = new ArrayList<>();
         mediaUrls.add(null);
@@ -157,7 +157,7 @@ public class ServiceRequestControllerTest {
             .receivingMode(receivingMode)
             .complaintStatus("FORWARDED")
             .childLocation("Gadu Veedhi")
-            .department("3")
+            .department(3L)
             .tenantId("tenantId")
             .build();
         ComplaintSearchCriteria criteria = ComplaintSearchCriteria.builder()
