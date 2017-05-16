@@ -52,7 +52,7 @@ import org.egov.demand.web.contract.Demand;
 import org.egov.demand.web.contract.DemandDetails;
 import org.egov.demand.web.contract.DemandRequest;
 import org.egov.demand.web.contract.DemandResponse;
-import org.egov.demand.web.contract.DemandSearchCriteria;
+import org.egov.demand.web.contract.DemandSearchRequest;
 import org.egov.demand.web.contract.RequestInfo;
 import org.egov.demand.web.contract.ResponseInfo;
 import org.egov.demand.web.contract.factory.ResponseInfoFactory;
@@ -86,21 +86,22 @@ public class DemandConroller {
 
 	@PostMapping("_search")
 	@ResponseBody
-	public ResponseEntity<?> search(@ModelAttribute @Valid DemandSearchCriteria demandSearchCriteria,@RequestBody RequestInfo requestInfo,
+	public ResponseEntity<?> search(@ModelAttribute @Valid DemandSearchRequest demandSearchRequest,@RequestBody RequestInfo requestInfo,
 			 BindingResult bindingResult) {
 
-		System.out.println("the request info object : "+requestInfo + "the modelatribute values ::: "+demandSearchCriteria);
+		System.out.println("the request info object : "+requestInfo + "the modelatribute values ::: "+ demandSearchRequest);
 		List<Demand> demands = new ArrayList<Demand>();
 		List<DemandDetails> demandDetails = new ArrayList<DemandDetails>();
 		EgDemand egDemand = null;
 		DemandDetails demandDetail = null;
-		if (bindingResult.hasErrors() || demandSearchCriteria == null) {
+		if (bindingResult.hasErrors() || demandSearchRequest == null) {
 			return errHandler.getErrorResponseEntityForBindingErrors(bindingResult, requestInfo);
 		}
 		try {
-			System.out.println("before calling demand repository the id value of demand :::  "+demandSearchCriteria.getDemandId());
-			egDemand = demandRepository.findOne(demandSearchCriteria.getDemandId());
-			System.out.println("before calling todomain ::::   "+demandSearchCriteria.getDemandId());
+			System.out.println("before calling demand repository the id value of demand :::  "+ demandSearchRequest.getDemandId());
+			//egDemand = demandRepository.findOne(demandSearchRequest.getDemandId());
+            egDemand = demandService.searchDemand(demandSearchRequest.toDomain(),requestInfo);
+			System.out.println("before calling todomain ::::   "+ demandSearchRequest.getDemandId());
 			Demand demand = egDemand.toDomain();
 			for(EgDemandDetails egdemandDetails: egDemand.getEgDemandDetails()){
 				System.out.println("inside the loop");

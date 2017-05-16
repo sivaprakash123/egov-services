@@ -23,4 +23,7 @@ public class Demand {
 	private List<DemandDetails> demandDetails;
 	private List<PaymentInfo> paymentInfos;
 	private String tenantId;
+    private String consumerCode;
+    private String businessDetails;
+    private String owner;
 }

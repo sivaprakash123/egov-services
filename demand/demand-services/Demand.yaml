@@ -306,29 +306,12 @@ paths:
     post:
       description: Returns a demand along with its list of demand details
       parameters:
-        - name: requestInfo
+        - name: demandSearchRequest
           in: body
-          description: Request header for the service request details.
+          description: Demand search request details
           required: true
           schema:
-            $ref: '#/definitions/RequestInfo'
-        - name: tenantId
-          in: query
-          description: Unique id for ulb.
-          required: true
-          type: string
-          format: varchar
-        - name: dmenadId
-          in: query
-          description: Primary key of Demand object.
-          required: false
-          type: integer
-          format: int64
-        - name: paymentInfoReq
-          in: query
-          description: True the payment info list will be returned. Falase the payment info list will not be returned.
-          required: false
-          type: boolean
+            $ref: '#/definitions/DemandSearchRequest'
       tags:
         - Demand
       responses:
@@ -598,6 +581,15 @@ definitions:
       moduleName:
         type: string
         description: name of the module
+      consumerCode:
+        type: string
+        description : Unique identification provided by the billing system.
+      owner:
+        type: string
+        description : Primary owner of the business detail.
+      businessDetails :
+        type : string
+        description : Billing system details e.g., PropertyTax,Water Charges etc.
       demandDetails:
         type: array
         items:
@@ -611,6 +603,8 @@ definitions:
       - installment
       - moduleName
       - demandDetails
+      - consumerCode
+      - businessDetails
       
   DemandDetails:
     type: object
@@ -1070,6 +1064,40 @@ definitions:
         items:
           $ref: '#/definitions/Installment'
     type: object
+    
+  DemandSearchRequest:
+    properties:
+      RequestInfo:
+        $ref: '#/definitions/RequestInfo'
+      tenantId :
+        type : string
+        description: Unique id for ulb.
+        format: varchar
+      demandId :
+        description: Primary key of Demand object.
+        type: integer
+        format: int64
+      consumerCode :
+        description : Unique identification provided by business details.
+        type : string
+        format : varchar
+      businessDetails :
+        description : Billing system details e.g., PropertyTax,Water Charges etc.
+        type : string
+        format : varchar
+      emailId :
+        description : Email Id of Primary owner of business detail.
+        type : string
+        format : varchar
+      mobileNumber :
+        description : Mobile number of Primary owner of business detail.
+        type : string
+        format : varchar
+      paymentInfoReq :
+        type: boolean
+        description: True the payment info list will be returned. False the payment info list will not be returned.
+    required :
+      - tenantId
       
   RequestInfo:
     type: object

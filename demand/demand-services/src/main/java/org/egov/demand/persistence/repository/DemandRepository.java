@@ -12,4 +12,8 @@ public interface DemandRepository
 		extends JpaRepository<EgDemand, java.lang.Long>, JpaSpecificationExecutor<EgDemand> {
 	@Transactional
 	EgDemand save(EgDemand demand);
+
+    EgDemand findByOwnerAndTenantId(String owner,String tenantId);
+
+    EgDemand findByConsumerCodeAndBusinessDetailsAndTenantId(String consumerCode,String businessDetails,String tenantId);
 }

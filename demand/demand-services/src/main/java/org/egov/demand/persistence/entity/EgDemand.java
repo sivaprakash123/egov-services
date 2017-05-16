@@ -56,6 +56,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import org.egov.demand.web.contract.Demand;
 
@@ -109,9 +110,17 @@ public class EgDemand implements java.io.Serializable {
 	@Column(name = "tenantid")
 	private String tenantId;
 
+    @NotNull
+    private String consumerCode;
+
+    @NotNull
+    private String businessDetails;
+
+    private String owner;
+
 	public Demand toDomain() {
 		return Demand.builder().id(id).installment(egInstallmentMaster.getDescription())
-				.moduleName("Leases And Agreements").build();
+				.moduleName("Leases And Agreements").consumerCode(consumerCode).businessDetails(businessDetails).owner(owner).build();
 	}
     
 	@Override
