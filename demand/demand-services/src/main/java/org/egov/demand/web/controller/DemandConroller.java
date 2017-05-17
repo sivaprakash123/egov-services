@@ -99,7 +99,6 @@ public class DemandConroller {
 		}
 		try {
 			System.out.println("before calling demand repository the id value of demand :::  "+ demandSearchRequest.getDemandId());
-			//egDemand = demandRepository.findOne(demandSearchRequest.getDemandId());
             egDemand = demandService.searchDemand(demandSearchRequest.toDomain(),requestInfo);
 			System.out.println("before calling todomain ::::   "+ demandSearchRequest.getDemandId());
 			Demand demand = egDemand.toDomain();

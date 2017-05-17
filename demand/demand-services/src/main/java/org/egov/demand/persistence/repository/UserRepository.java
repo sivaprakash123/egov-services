@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -31,8 +29,7 @@ public class UserRepository {
         UserSearchRequest userSearchRequest = UserSearchRequest.builder().tenantId(tenantId).emailId(emailId).mobileNumber(mobileNumber).requestInfo(requestInfo).build();
         List<User> user = restTemplate.postForObject(url,userSearchRequest, UserSearchResponse.class).getUsers();
         System.out.println(user);
-
-        return user.get(0);
+        return !user.isEmpty() ? user.get(0) : new User();
 
     }
 
