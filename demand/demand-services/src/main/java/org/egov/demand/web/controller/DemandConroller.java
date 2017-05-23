@@ -92,23 +92,25 @@ public class DemandConroller {
 		System.out.println("the request info object : "+requestInfo + "the modelatribute values ::: "+ demandSearchRequest);
 		List<Demand> demands = new ArrayList<Demand>();
 		List<DemandDetails> demandDetails = new ArrayList<DemandDetails>();
-		EgDemand egDemand = null;
+		List<EgDemand> egDemands = null;
 		DemandDetails demandDetail = null;
 		if (bindingResult.hasErrors() || demandSearchRequest == null) {
 			return errHandler.getErrorResponseEntityForBindingErrors(bindingResult, requestInfo);
 		}
 		try {
 			System.out.println("before calling demand repository the id value of demand :::  "+ demandSearchRequest.getDemandId());
-            egDemand = demandService.searchDemand(demandSearchRequest.toDomain(),requestInfo);
+            egDemands = demandService.searchDemand(demandSearchRequest.toDomain(),requestInfo);
 			System.out.println("before calling todomain ::::   "+ demandSearchRequest.getDemandId());
-			Demand demand = egDemand.toDomain();
-			for(EgDemandDetails egdemandDetails: egDemand.getEgDemandDetails()){
-				System.out.println("inside the loop");
-				demandDetail = egdemandDetails.toDomain();
-				demandDetails.add(demandDetail);
-			}
-			demand.setDemandDetails(demandDetails);
-			demands.add(demand);
+            for(EgDemand egDemand : egDemands) {
+                Demand demand = egDemand.toDomain();
+                for (EgDemandDetails egdemandDetails : egDemand.getEgDemandDetails()) {
+                    System.out.println("inside the loop");
+                    demandDetail = egdemandDetails.toDomain();
+                    demandDetails.add(demandDetail);
+                }
+                demand.setDemandDetails(demandDetails);
+                demands.add(demand);
+            }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

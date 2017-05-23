@@ -13,12 +13,17 @@ import org.egov.demand.web.contract.Demand;
 import org.egov.demand.web.contract.DemandDetails;
 import org.egov.demand.web.contract.RequestInfo;
 import org.egov.demand.web.contract.User;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,6 +37,8 @@ public class DemandService {
 	private InstallmentService installmentService;
     @Autowired
     private UserRepository userRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
 
 	public EgDemand createDemand(Demand demand) throws Exception {
 		LOGGER.info("createDemand - demand - " + demand);
@@ -106,19 +113,31 @@ public class DemandService {
 		return demandRepository.save(egDemand);
 	}
 
-    public EgDemand searchDemand(DemandSearchCriteria searchCriteria,RequestInfo requestInfo) {
-        EgDemand egDemand = null;
-        if(StringUtils.isNotBlank(searchCriteria.getEmailId()) && StringUtils.isNotBlank(searchCriteria.getMobileNumber())) {
-           User user = userRepository.searchUserByEmailAndMobileNumber(searchCriteria.getEmailId(),searchCriteria.getMobileNumber(),
-                   searchCriteria.getTenantId(),requestInfo);
-            if(user != null && user.getId() != null)
-                egDemand = demandRepository.findByOwnerAndTenantId(user.getUserName(),searchCriteria.getTenantId());
-
-        } else if(searchCriteria.getDemandId() != null) {
-            egDemand = demandRepository.findOne(searchCriteria.getDemandId());
-        } else {
-            egDemand = demandRepository.findByConsumerCodeAndBusinessDetailsAndTenantId(searchCriteria.getConsumerCode(),searchCriteria.getBusinessDetails(),searchCriteria.getTenantId());
+    public List<EgDemand> searchDemand(DemandSearchCriteria searchCriteria,RequestInfo requestInfo) {
+        StringBuilder queryStr = new StringBuilder();
+        queryStr.append("from EgDemand d where d.tenantId=:tenantId");
+        if(StringUtils.isNotBlank(searchCriteria.getEmailId()) || StringUtils.isNotBlank(searchCriteria.getMobileNumber())) {
+            queryStr.append(" and d.owner =:owner ");
         }
-        return egDemand;
+        if(searchCriteria.getDemandId() != null) {
+            queryStr.append(" and d.id =:id ");
+        }
+        if(StringUtils.isNotBlank(searchCriteria.getConsumerCode())){
+            queryStr.append(" and d.consumerCode =:consumerCode ");
+        }
+        final Query query = entityManager.unwrap(Session.class).createQuery(queryStr.toString());
+        query.setString("tenantId", searchCriteria.getTenantId());
+        if(StringUtils.isNotBlank(searchCriteria.getEmailId()) || StringUtils.isNotBlank(searchCriteria.getMobileNumber())) {
+            User user = userRepository.searchUserByEmailAndMobileNumber(searchCriteria.getEmailId(),searchCriteria.getMobileNumber(),
+                    searchCriteria.getTenantId(),requestInfo);
+            if(user != null && user.getId() != null)
+            query.setString("owner", user.getUserName());
+        }
+        if(searchCriteria.getDemandId() != null)
+            query.setLong("id",searchCriteria.getDemandId());
+        if(StringUtils.isNotBlank(searchCriteria.getConsumerCode()))
+            query.setString("consumerCode",searchCriteria.getConsumerCode());
+
+        return (List<EgDemand>) query.list();
     }
 }
