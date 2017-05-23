@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.egov.lams.brokers.producer.AgreementProducer;
 import org.egov.lams.config.PropertiesManager;
 import org.egov.lams.model.Agreement;
 import org.egov.lams.model.AgreementCriteria;
@@ -14,7 +16,6 @@ import org.egov.lams.model.DemandReason;
 import org.egov.lams.model.WorkflowDetails;
 import org.egov.lams.model.enums.Source;
 import org.egov.lams.model.enums.Status;
-import org.egov.lams.producers.AgreementProducer;
 import org.egov.lams.repository.AgreementRepository;
 import org.egov.lams.repository.DemandRepository;
 import org.egov.lams.util.AcknowledgementNumberUtil;
@@ -149,14 +150,13 @@ public class AgreementService {
 		ObjectMapper mapper = new ObjectMapper();
 		String agreementValue = null;
 		String kafkaTopic = null;
-		//FIXME remove after fixing tenantidf set to default for now 
-		agreement.getLegacyDemands().get(0).setTenantId("default");
-		
+
 		if (agreement.getSource().equals(Source.DATA_ENTRY)) {
 			logger.info("updateagreementservice Source.DATA_ENTRY");
 			kafkaTopic = propertiesManager.getUpdateAgreementTopic();
-			agreement.setDemands(updateDemnad(agreement.getDemands(),agreement.getLegacyDemands(), agreementRequest.getRequestInfo()));
-			logger.info("the id from demand save call :: "+agreement.getDemands());
+			agreement.setDemands(updateDemnad(agreement.getDemands(), agreement.getLegacyDemands(),
+					agreementRequest.getRequestInfo()));
+			logger.info("the id from demand save call :: " + agreement.getDemands());
 		} else if (agreement.getSource().equals(Source.SYSTEM)) {
 
 			kafkaTopic = propertiesManager.getUpdateWorkflowTopic();
@@ -178,7 +178,7 @@ public class AgreementService {
 				}
 			}
 		}
-		logger.info("kafkatopic value :: "+ kafkaTopic);
+		logger.info("kafkatopic value :: " + kafkaTopic);
 		try {
 			agreementValue = mapper.writeValueAsString(agreementRequest);
 			logger.info("agreementValue::" + agreementValue);
@@ -196,15 +196,14 @@ public class AgreementService {
 		return agreement;
 	}
 
-	private List<String> updateDemnad(List<String> demands,List<Demand> legacydemands, RequestInfo requestInfo) {
+	private List<String> updateDemnad(List<String> demands, List<Demand> legacydemands, RequestInfo requestInfo) {
 
 		DemandResponse demandResponse = null;
 		if (demands == null)
 			demandResponse = demandRepository.createDemand(legacydemands, requestInfo);
 		else
 			demandResponse = demandRepository.updateDemand(legacydemands, requestInfo);
-		return demandResponse.getDemands().stream().map(demand -> demand.getId())
-				.collect(Collectors.toList());
+		return demandResponse.getDemands().stream().map(demand -> demand.getId()).collect(Collectors.toList());
 	}
 
 	public List<Demand> prepareDemands(AgreementRequest agreementRequest) {
@@ -221,14 +220,13 @@ public class AgreementService {
 		} else {
 			DemandSearchCriteria demandSearchCriteria = new DemandSearchCriteria();
 			demandSearchCriteria.setDemandId(Long.parseLong(demandIds.get(0)));
-			logger.info("the demand search id :: "+demandSearchCriteria.getDemandId());
 			legacyDemands = demandRepository.getDemandBySearch(demandSearchCriteria, agreementRequest.getRequestInfo())
 					.getDemands();
 		}
 		return legacyDemands;
 	}
 
-	public List<Agreement> searchAgreement(AgreementCriteria agreementCriteria,RequestInfo requestInfo) {
+	public List<Agreement> searchAgreement(AgreementCriteria agreementCriteria, RequestInfo requestInfo) {
 		/*
 		 * three boolean variables isAgreementNull,isAssetNull and
 		 * isAllotteeNull declared to indicate whether criteria arguments for
@@ -251,33 +249,33 @@ public class AgreementService {
 
 		if (!isAgreementNull && !isAssetNull && !isAllotteeNull) {
 			logger.info("agreementRepository.findByAllotee");
-			return agreementRepository.findByAllotee(agreementCriteria,requestInfo);
+			return agreementRepository.findByAllotee(agreementCriteria, requestInfo);
 
 		} else if (!isAgreementNull && isAssetNull && !isAllotteeNull) {
 			logger.info("agreementRepository.findByAllotee");
-			return agreementRepository.findByAgreementAndAllotee(agreementCriteria,requestInfo);
+			return agreementRepository.findByAgreementAndAllotee(agreementCriteria, requestInfo);
 
 		} else if (!isAgreementNull && !isAssetNull && isAllotteeNull) {
 			logger.info("agreementRepository.findByAgreementAndAsset : both agreement and ");
-			return agreementRepository.findByAgreementAndAsset(agreementCriteria,requestInfo);
+			return agreementRepository.findByAgreementAndAsset(agreementCriteria, requestInfo);
 
 		} else if ((isAgreementNull && isAssetNull && !isAllotteeNull)
 				|| (isAgreementNull && !isAssetNull && !isAllotteeNull)) {
 			logger.info("agreementRepository.findByAllotee : only allottee || allotte and asset");
-			return agreementRepository.findByAllotee(agreementCriteria,requestInfo);
+			return agreementRepository.findByAllotee(agreementCriteria, requestInfo);
 
 		} else if (isAgreementNull && !isAssetNull && isAllotteeNull) {
 			logger.info("agreementRepository.findByAsset : only asset");
-			return agreementRepository.findByAsset(agreementCriteria,requestInfo);
+			return agreementRepository.findByAsset(agreementCriteria, requestInfo);
 
 		} else if (!isAgreementNull && isAssetNull && isAllotteeNull) {
 			logger.info("agreementRepository.findByAgreement : only agreement");
-			return agreementRepository.findByAgreement(agreementCriteria,requestInfo);
+			return agreementRepository.findByAgreement(agreementCriteria, requestInfo);
 		} else {
 			// if no values are given for all the three criteria objects
 			// (isAgreementNull && isAssetNull && isAllotteeNull)
 			logger.info("agreementRepository.findByAgreement : all values null");
-			return agreementRepository.findByAgreement(agreementCriteria,requestInfo);
+			return agreementRepository.findByAgreement(agreementCriteria, requestInfo);
 		}
 	}
 

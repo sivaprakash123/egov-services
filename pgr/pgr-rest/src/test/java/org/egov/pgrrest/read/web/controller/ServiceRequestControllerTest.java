@@ -5,7 +5,7 @@ import org.egov.pgrrest.TestConfiguration;
 import org.egov.pgrrest.TestResourceReader;
 import org.egov.pgrrest.common.contract.SevaRequest;
 import org.egov.pgrrest.common.model.AuthenticatedUser;
-import org.egov.pgrrest.common.model.Complainant;
+import org.egov.pgrrest.common.model.Requester;
 import org.egov.pgrrest.common.model.UserType;
 import org.egov.pgrrest.common.repository.UserRepository;
 import org.egov.pgrrest.read.domain.exception.InvalidComplaintException;
@@ -21,11 +21,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -50,8 +53,8 @@ public class ServiceRequestControllerTest {
     public void test_should_return_error_response_when_tenant_id_is_not_present_on_creating_a_complaint()
         throws Exception {
         when(userRepository.getUser("authToken")).thenReturn(getCitizen());
-        Complaint invalidComplaint = getComplaintWithNoTenantId();
-        doThrow(new InvalidComplaintException(invalidComplaint)).when(serviceRequestService).save(any(Complaint.class),
+        ServiceRequest invalidComplaint = getComplaintWithNoTenantId();
+        doThrow(new InvalidComplaintException(invalidComplaint)).when(serviceRequestService).save(any(ServiceRequest.class),
             any(SevaRequest.class));
 
         mockMvc.perform(post("/seva/_create")
@@ -86,21 +89,21 @@ public class ServiceRequestControllerTest {
             .andExpect(content().json(resources.getFileContents("updateComplaintResponse.json")));
     }
 
-    public Complaint getComplaintWithNoTenantId() {
-        final ComplaintLocation complaintLocation = ComplaintLocation.builder()
-            .coordinates(new Coordinates(11.22d, 12.22d, null)).build();
-        final Complainant complainant = Complainant.builder()
+    public ServiceRequest getComplaintWithNoTenantId() {
+        final ServiceRequestLocation serviceRequestLocation = ServiceRequestLocation.builder()
+            .coordinates(new Coordinates(11.22d, 12.22d)).build();
+        final Requester complainant = Requester.builder()
             .userId("userId")
             .firstName("first name")
             .mobile("mobile number")
             .build();
-        return Complaint.builder()
-            .complainant(complainant)
+        return ServiceRequest.builder()
+            .requester(complainant)
             .authenticatedUser(getCitizen())
-            .complaintLocation(complaintLocation)
+            .serviceRequestLocation(serviceRequestLocation)
             .tenantId(null)
             .description("description")
-            .complaintType(new ComplaintType(null, "complaintCode", null))
+            .complaintType(new ServiceRequestType(null, "complaintCode", null))
             .build();
     }
 
@@ -139,28 +142,28 @@ public class ServiceRequestControllerTest {
             .type(UserType.CITIZEN)
             .tenantId("tenantId")
             .build();
-        final Complainant domainComplainant = new Complainant("kumar", null, null, "mico layout", "user", "tenantId");
-        final ComplaintLocation complaintLocation = new ComplaintLocation(new Coordinates(0.0, 0.0, "tenantId"), null, "34", "tenantId");
-        Complaint complaint = Complaint.builder()
+        final Requester domainComplainant = new Requester("kumar", null, null, "mico layout", "user");
+        final ServiceRequestLocation serviceRequestLocation = new ServiceRequestLocation(new Coordinates(0.0, 0.0), null, "34");
+        ServiceRequest complaint = ServiceRequest.builder()
             .authenticatedUser(user)
             .crn(crn)
-            .complaintType(new ComplaintType("abc", "complaintCode", "tenantId"))
+            .complaintType(new ServiceRequestType("abc", "complaintCode", "tenantId"))
             .address(address)
             .mediaUrls(mediaUrls)
-            .complaintLocation(complaintLocation)
-            .complainant(domainComplainant)
+            .serviceRequestLocation(serviceRequestLocation)
+            .requester(domainComplainant)
             .tenantId(jurisdictionId)
             .description(description)
             .state(stateId)
             .assignee(assigneeId)
             .receivingCenter(receivingCenter)
             .receivingMode(receivingMode)
-            .complaintStatus("FORWARDED")
+            .serviceRequestStatus("FORWARDED")
             .childLocation("Gadu Veedhi")
             .department(3L)
             .tenantId("tenantId")
             .build();
-        ComplaintSearchCriteria criteria = ComplaintSearchCriteria.builder()
+        ServiceRequestSearchCriteria criteria = ServiceRequestSearchCriteria.builder()
             .assignmentId(10L)
             .endDate(null)
             .escalationDate(null)
@@ -178,7 +181,7 @@ public class ServiceRequestControllerTest {
             .tenantId("tenantId")
             .build();
 
-        List<Complaint> complaints = new ArrayList<>(Collections.singletonList(complaint));
+        List<ServiceRequest> complaints = new ArrayList<>(Collections.singletonList(complaint));
         when(serviceRequestService.findAll(criteria)).thenReturn(complaints);
 
         String content = new TestResourceReader().readResource("getServiceRequests.json");
@@ -191,30 +194,9 @@ public class ServiceRequestControllerTest {
                 ".com&mobileNumber=74742487428&receivingMode=5&locationId=4&childLocationId=5")
                 .content(resources.getFileContents("requestinfobody.json"))
                 .contentType(MediaType.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(content().json(expectedContent));
     }
 
-    @Test
-    public void testGetServiceRequestsFailsWithoutTenantId() throws Exception {
-        mockMvc.perform( post("/seva/_search?service_request_id=serid_123&service_code=serviceCode_123&status" +
-            "=REGISTERED,FORWARDED&assignment_id=10&user_id=10&name=kumar&email_id=abc@gmail" +
-            ".com&mobile_number=74742487428&receiving_mode=5&location_id=4&child_location_id=5")
-            .content(resources.getFileContents("requestinfobody.json"))
-            .contentType(MediaType.APPLICATION_JSON_UTF8))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-    }
-
-    @Test
-    public void testShouldUpdateLastAccessedTime() throws Exception {
-        mockMvc.perform(
-            post("/seva/updateLastAccessedTime")
-                .param("serviceRequestId", "crn")
-                .param("tenantId", "tenantId")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(resources.getFileContents("updateLastAccessTimeRequest.json"))
-        ).andExpect(status().isOk());
-        verify(serviceRequestService).updateLastAccessedTime("crn","tenantId");
-    }
 }

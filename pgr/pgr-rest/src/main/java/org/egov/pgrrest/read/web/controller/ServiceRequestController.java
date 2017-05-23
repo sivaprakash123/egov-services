@@ -2,10 +2,9 @@ package org.egov.pgrrest.read.web.controller;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
-import org.egov.pgrrest.common.contract.ServiceRequest;
 import org.egov.pgrrest.common.contract.SevaRequest;
-import org.egov.pgrrest.read.domain.model.Complaint;
-import org.egov.pgrrest.read.domain.model.ComplaintSearchCriteria;
+import org.egov.pgrrest.read.domain.model.ServiceRequest;
+import org.egov.pgrrest.read.domain.model.ServiceRequestSearchCriteria;
 import org.egov.pgrrest.read.domain.service.ServiceRequestService;
 import org.egov.pgrrest.read.web.contract.RequestInfoBody;
 import org.egov.pgrrest.read.web.contract.ServiceResponse;
@@ -33,7 +32,7 @@ public class ServiceRequestController {
     @PostMapping(value = "/_create")
     @ResponseStatus(HttpStatus.CREATED)
     public ServiceResponse createServiceRequest(@RequestBody SevaRequest request) {
-        final Complaint complaint = request.toDomainForCreateRequest();
+        final ServiceRequest complaint = request.toDomainForCreateRequest();
         serviceRequestService.save(complaint, request);
         ResponseInfo responseInfo = getResponseInfo(request);
         return new ServiceResponse(responseInfo, Collections.singletonList(request.getServiceRequest()));
@@ -42,14 +41,15 @@ public class ServiceRequestController {
     @PostMapping(value = "/_update")
     @ResponseStatus(HttpStatus.OK)
     public ServiceResponse updateServiceRequest(@RequestBody SevaRequest request) {
-        final Complaint complaint = request.toDomainForUpdateRequest();
+        final ServiceRequest complaint = request.toDomainForUpdateRequest();
         serviceRequestService.update(complaint, request);
         ResponseInfo responseInfo = getResponseInfo(request);
-        return new ServiceResponse(responseInfo, Collections.singletonList(new ServiceRequest(complaint)));
+        return new ServiceResponse(responseInfo, Collections.singletonList(new org.egov.pgrrest.common.contract
+            .ServiceRequest(complaint)));
     }
 
     @PostMapping(value = "/_search")
-    public ServiceResponse getServiceRequests(@RequestParam("tenantId") String tenantId,
+    public ServiceResponse getServiceRequests(@RequestParam(value = "tenantId", required = false) String tenantId,
                                               @RequestParam(value = "serviceRequestId", required = false) String
                                                   serviceRequestId,
                                               @RequestParam(value = "serviceCode", required = false) String
@@ -75,9 +75,11 @@ public class ServiceRequestController {
                                               @RequestParam(value = "locationId", required = false) Long locationId,
                                               @RequestParam(value = "childLocationId", required = false) Long
                                                   childLocationId,
+                                              @RequestParam(value = "useNewSchema", required = false) boolean
+                                                  isNewSchemaEnabled,
                                               @RequestBody RequestInfoBody requestInfoBody) {
 
-        ComplaintSearchCriteria complaintSearchCriteria = ComplaintSearchCriteria.builder()
+        ServiceRequestSearchCriteria serviceRequestSearchCriteria = ServiceRequestSearchCriteria.builder()
             .assignmentId(assignmentId)
             .endDate(endDate)
             .lastModifiedDatetime(lastModifiedDate)
@@ -94,21 +96,15 @@ public class ServiceRequestController {
             .locationId(locationId)
             .childLocationId(childLocationId)
             .tenantId(tenantId)
+            .useNewSchema(isNewSchemaEnabled)
             .build();
-        final List<Complaint> complaints = serviceRequestService.findAll(complaintSearchCriteria);
+        final List<ServiceRequest> complaints = serviceRequestService.findAll(serviceRequestSearchCriteria);
         return createResponse(complaints);
     }
 
-    @PostMapping(value = "/updateLastAccessedTime")
-    @ResponseBody
-    public void updateLastAccessedTime(@RequestParam final String serviceRequestId,
-                                       @RequestBody RequestInfoBody requestInfo,
-                                       @RequestParam(value = "tenantId") final String tenantId) {
-        serviceRequestService.updateLastAccessedTime(serviceRequestId,tenantId);
-    }
-
-    private ServiceResponse createResponse(List<Complaint> complaints) {
-        final List<ServiceRequest> serviceRequests = complaints.stream().map(ServiceRequest::new)
+    private ServiceResponse createResponse(List<ServiceRequest> complaints) {
+        final List<org.egov.pgrrest.common.contract.ServiceRequest> serviceRequests = complaints.stream().map(org
+            .egov.pgrrest.common.contract.ServiceRequest::new)
             .collect(Collectors.toList());
         return new ServiceResponse(null, serviceRequests);
     }

@@ -1,49 +1,45 @@
 package org.egov.pgrrest.read.domain.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.egov.pgrrest.common.repository.ComplaintJpaRepository;
-import org.egov.pgrrest.read.domain.model.Complaint;
-import org.egov.pgrrest.read.domain.model.ComplaintSearchCriteria;
 import org.egov.pgrrest.common.contract.SevaRequest;
-import org.egov.pgrrest.read.persistence.repository.ComplaintRepository;
 import org.egov.pgrrest.common.repository.UserRepository;
+import org.egov.pgrrest.read.domain.model.ServiceRequest;
+import org.egov.pgrrest.read.domain.model.ServiceRequestSearchCriteria;
+import org.egov.pgrrest.read.persistence.repository.ServiceRequestRepository;
 import org.egov.pgrrest.read.web.contract.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ServiceRequestService {
 
     private static final String SYSTEM_USER = "SYSTEM";
-    private ComplaintRepository complaintRepository;
-	private ComplaintJpaRepository complaintJpaRepository;
-	private UserRepository userRepository;
+    private static final String ANONYMOUS_USER_NAME = "anonymous";
+    private ServiceRequestRepository serviceRequestRepository;
+    private UserRepository userRepository;
 	private SevaNumberGeneratorService sevaNumberGeneratorService;
 
     @Autowired
-    public ServiceRequestService(ComplaintRepository complaintRepository,
-                                 SevaNumberGeneratorService sevaNumberGeneratorService, UserRepository userRepository,
-                                 ComplaintJpaRepository complaintJpaRepository) {
-        this.complaintRepository = complaintRepository;
+    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository,
+                                 SevaNumberGeneratorService sevaNumberGeneratorService,
+                                 UserRepository userRepository) {
+        this.serviceRequestRepository = serviceRequestRepository;
         this.sevaNumberGeneratorService = sevaNumberGeneratorService;
         this.userRepository = userRepository;
-        this.complaintJpaRepository = complaintJpaRepository;
     }
 
-    public List<Complaint> findAll(ComplaintSearchCriteria complaintSearchCriteria) {
-        return complaintRepository.findAll(complaintSearchCriteria);
+    public List<ServiceRequest> findAll(ServiceRequestSearchCriteria serviceRequestSearchCriteria) {
+        return serviceRequestRepository.findAll(serviceRequestSearchCriteria);
     }
 
-	public void save(Complaint complaint, SevaRequest sevaRequest) {
+	public void save(ServiceRequest complaint, SevaRequest sevaRequest) {
 		complaint.validate();
 		final String crn = sevaNumberGeneratorService.generate();
 		complaint.setCrn(crn);
 		sevaRequest.update(complaint);
 		setUserIdForAnonymousUser(sevaRequest);
-		complaintRepository.save(sevaRequest);
+		serviceRequestRepository.save(sevaRequest);
 	}
 
 	private void setUserIdForAnonymousUser(SevaRequest sevaRequest) {
@@ -60,25 +56,14 @@ public class ServiceRequestService {
     }
 
     private User getAnonymousUser(String tenantId) {
-        return userRepository.getUserByUserName("anonymous",tenantId); 
+        return userRepository.getUserByUserName(ANONYMOUS_USER_NAME,tenantId);
     }
 
-    public void update(Complaint complaint, SevaRequest sevaRequest) {
+    public void update(ServiceRequest complaint, SevaRequest sevaRequest) {
 		complaint.validate();
 		sevaRequest.update(complaint);
 		setUserIdForAnonymousUser(sevaRequest);
-		complaintRepository.update(sevaRequest);
+		serviceRequestRepository.update(sevaRequest);
 	}
-
-    public void updateLastAccessedTime(String crn, String tenantId) {
-        complaintJpaRepository.updateLastAccessedTime(new Date(), crn, tenantId);
-    }
-
-    public List<Complaint> getAllModifiedCitizenComplaints(Long userId, String tenantId) {
-        if (userId != null) {
-            return complaintRepository.getAllModifiedComplaintsForCitizen(userId, tenantId);
-        }
-        return new ArrayList<>();
-    }
 
 }

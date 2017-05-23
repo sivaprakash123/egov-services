@@ -2,12 +2,16 @@ package org.egov.pgrrest.common.entity;
 
 import lombok.*;
 import org.egov.pgrrest.common.model.AuthenticatedUser;
-import org.egov.pgrrest.read.domain.model.ComplaintLocation;
+import org.egov.pgrrest.read.domain.model.ServiceRequestLocation;
 import org.egov.pgrrest.read.domain.model.Coordinates;
+import org.egov.pgrrest.read.domain.model.ServiceRequest;
+import org.egov.pgrrest.read.domain.model.ServiceRequestType;
 
 import javax.persistence.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static org.egov.pgrrest.common.entity.Complaint.SEQ_COMPLAINT;
 
@@ -22,7 +26,9 @@ import static org.egov.pgrrest.common.entity.Complaint.SEQ_COMPLAINT;
 public class Complaint extends AbstractAuditable<Long> {
 
     public static final String SEQ_COMPLAINT = "SEQ_EGPGR_COMPLAINT";
+    private static List<String> RESOLVED_STATUES = Arrays.asList("COMPLETED", "APPROVED");
     private static final long serialVersionUID = 4020616083055647372L;
+
     @Id
     @GeneratedValue(generator = SEQ_COMPLAINT, strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -32,7 +38,7 @@ public class Complaint extends AbstractAuditable<Long> {
 
     @ManyToOne
     @JoinColumn(name = "complainttype")
-    private ComplaintType complaintType;
+    private ServiceType complaintType;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "complainant", nullable = false)
@@ -55,9 +61,9 @@ public class Complaint extends AbstractAuditable<Long> {
     @Column(name = "landmarkdetails")
     private String landmarkDetails;
 
-	@ManyToOne
-	@JoinColumn(name = "receivingmode")
-	private ReceivingMode receivingMode;
+    @ManyToOne
+    @JoinColumn(name = "receivingmode")
+    private ReceivingMode receivingMode;
 
     @ManyToOne
     @JoinColumn(name = "receivingcenter")
@@ -93,9 +99,9 @@ public class Complaint extends AbstractAuditable<Long> {
 
     @Column(name = "lastaccessedtime")
     private Date lastAccessedTime;
-    
-	@Column(name = "tenantid")
-	private String tenantId;
+
+    @Column(name = "tenantid")
+    private String tenantId;
 
     @Override
     public Long getId() {
@@ -108,43 +114,44 @@ public class Complaint extends AbstractAuditable<Long> {
     }
 
     public boolean isCompleted() {
-        return org.egov.pgrrest.common.entity.enums.ComplaintStatus
-                .valueOf(getStatus()) == org.egov.pgrrest.common.entity.enums.ComplaintStatus.COMPLETED;
+        return RESOLVED_STATUES.stream().anyMatch(status -> status.equalsIgnoreCase(this.status));
     }
 
     public String getCrossHierarchyId() {
         return crossHierarchyId == null ? null : crossHierarchyId.toString();
     }
 
-    public org.egov.pgrrest.read.domain.model.Complaint toDomain() {
-        final Coordinates coordinates = new Coordinates(latitude, longitude, tenantId);
+    public ServiceRequest toDomain() {
+        final Coordinates coordinates = new Coordinates(latitude, longitude);
         final String locationId = getLocationId();
-        final org.egov.pgrrest.read.domain.model.ComplaintType complaintType =
-                new org.egov.pgrrest.read.domain.model.ComplaintType(this.complaintType.getName(), this.complaintType.getCode(), this.complaintType.getTenantId());
-        return org.egov.pgrrest.read.domain.model.Complaint.builder()
-                .complaintLocation(new ComplaintLocation(coordinates, getCrossHierarchyId(), locationId, tenantId))
-                .complaintType(complaintType)
-                .authenticatedUser(AuthenticatedUser.createAnonymousUser())
-                .complainant(complainant.toDomain())
-                .address(landmarkDetails)
-                .description(details)
-                .crn(crn)
-                .createdDate(getCreatedDate())
-                .lastModifiedDate(getLastModifiedDate())
-                .mediaUrls(Collections.emptyList())
-                .escalationDate(getEscalationDate())
-                .closed(isCompleted())
-                .department(getDepartmentId())
-                .lastAccessedTime(lastAccessedTime)
-                .receivingMode(getReceivingModeCode())
-                .receivingCenter(getReceivingCenterId())
-                .childLocation(getChildLocationId())
-                .assignee(getAssigneeId())
-                .tenantId(tenantId)
-                .state(getState())
-                .complaintStatus(getComplaintStatus())
-                .citizenFeedback(getCitizenFeedback())
-                .build();
+        final ServiceRequestType complaintType =
+            new ServiceRequestType(this.complaintType.getName(), this.complaintType.getCode(), this.complaintType
+                .getTenantId());
+
+        return ServiceRequest.builder()
+            .serviceRequestLocation(new ServiceRequestLocation(coordinates, getCrossHierarchyId(), locationId))
+            .complaintType(complaintType)
+            .authenticatedUser(AuthenticatedUser.createAnonymousUser())
+            .requester(complainant.toDomain())
+            .address(landmarkDetails)
+            .description(details)
+            .crn(crn)
+            .createdDate(getCreatedDate())
+            .lastModifiedDate(getLastModifiedDate())
+            .mediaUrls(Collections.emptyList())
+            .escalationDate(getEscalationDate())
+            .closed(isCompleted())
+            .department(getDepartmentId())
+            .lastAccessedTime(lastAccessedTime)
+            .receivingMode(getReceivingModeCode())
+            .receivingCenter(getReceivingCenterId())
+            .childLocation(getChildLocationId())
+            .assignee(getAssigneeId())
+            .tenantId(tenantId)
+            .state(getState())
+            .serviceRequestStatus(status)
+            .citizenFeedback(getCitizenFeedback())
+            .build();
     }
 
     public String getReceivingModeCode() {
@@ -154,10 +161,9 @@ public class Complaint extends AbstractAuditable<Long> {
     public String getLocationId() {
         return location != null ? location.toString() : null;
     }
-    
-    public String getCitizenFeedback()
-    {
-    	return citizenFeedback!=null ? citizenFeedback.toString():null;
+
+    public String getCitizenFeedback() {
+        return citizenFeedback != null ? citizenFeedback.toString() : null;
     }
 
     private Long getDepartmentId() {
@@ -177,11 +183,7 @@ public class Complaint extends AbstractAuditable<Long> {
     }
 
     private String getChildLocationId() {
-        return childLocation != null ? childLocation.toString(): null;
-    }
-    
-    private String getComplaintStatus(){
-    	return status;
+        return childLocation != null ? childLocation.toString() : null;
     }
 
 }

@@ -6,15 +6,14 @@ import lombok.*;
 import org.egov.pgr.common.contract.AttributeEntry;
 import org.egov.pgr.common.contract.AttributeValues;
 import org.egov.pgrrest.common.model.AuthenticatedUser;
-import org.egov.pgrrest.common.model.Complainant;
-import org.egov.pgrrest.read.domain.model.Complaint;
-import org.egov.pgrrest.read.domain.model.ComplaintLocation;
-import org.egov.pgrrest.read.domain.model.ComplaintType;
+import org.egov.pgrrest.common.model.Requester;
+import org.egov.pgrrest.read.domain.model.ServiceRequestLocation;
+import org.egov.pgrrest.read.domain.model.ServiceRequestType;
 import org.egov.pgrrest.read.domain.model.Coordinates;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-
-import static org.springframework.util.StringUtils.isEmpty;
+import java.util.stream.Collectors;
 
 /**
  * Service request raised by the citizen
@@ -93,21 +92,17 @@ public class ServiceRequest {
     private String deviceId;
 
     private String accountId;
-    
+
     private Map<String, String> values = new HashMap<>();
 
-//  Short term feature flag - to support values and attribValues usage
+    //  Short term feature flag - to support values and attribValues usage
 //  This flag should be set by the consumer for the service to consider attribValues instead of existing values field.
     @JsonProperty("isAttribValuesPopulated")
     private boolean attribValuesPopulated;
 
     private List<AttributeEntry> attribValues = new ArrayList<>();
 
-//  Short term feature flag - to support persisting to complaint table or new submission table.
-    @JsonProperty("isForNewSchema")
-    private boolean useNewSchema;
-
-    public ServiceRequest(Complaint complaint) {
+    public ServiceRequest(org.egov.pgrrest.read.domain.model.ServiceRequest complaint) {
         crn = complaint.getCrn();
         status = complaint.isClosed();
         complaintTypeName = complaint.getComplaintType().getName();
@@ -117,110 +112,71 @@ public class ServiceRequest {
         lastModifiedDate = complaint.getLastModifiedDate();
         escalationDate = complaint.getEscalationDate();
         address = complaint.getAddress();
-        crossHierarchyId = complaint.getComplaintLocation().getCrossHierarchyId();
-        latitude = complaint.getComplaintLocation().getCoordinates().getLatitude();
-        longitude = complaint.getComplaintLocation().getCoordinates().getLongitude();
-        firstName = complaint.getComplainant().getFirstName();
+        crossHierarchyId = complaint.getServiceRequestLocation().getCrossHierarchyId();
+        latitude = complaint.getServiceRequestLocation().getCoordinates().getLatitude();
+        longitude = complaint.getServiceRequestLocation().getCoordinates().getLongitude();
+        firstName = complaint.getRequester().getFirstName();
         lastName = null;
-        phone = complaint.getComplainant().getMobile();
-        email = complaint.getComplainant().getEmail();
-        values = getAdditionalValues(complaint);
-        attribValues = getAttributeValues(complaint);
+        phone = complaint.getRequester().getMobile();
+        email = complaint.getRequester().getEmail();
+        attribValuesPopulated = true;
+        if (!CollectionUtils.isEmpty(complaint.getAttributeEntries())) {
+            attribValues = complaint.getAttributeEntries()
+                .stream()
+                .map(attribute -> new AttributeEntry(attribute.getKey(), attribute.getCode()))
+                .collect(Collectors.toList());
+        }
         tenantId = complaint.getTenantId();
     }
 
-    private List<AttributeEntry> getAttributeValues(Complaint complaint) {
-        final ArrayList<AttributeEntry> attributeEntries = new ArrayList<>();
-        attributeEntries.add(new AttributeEntry("receivingMode", complaint.getReceivingMode()));
-        attributeEntries.add(new AttributeEntry("complaintStatus", complaint.getComplaintStatus()));
-        addAttributeEntryIfPresent(attributeEntries, "receivingCenter", complaint.getReceivingCenter());
-        addAttributeEntryIfPresent(attributeEntries, "locationId", complaint.getComplaintLocation().getLocationId());
-        addAttributeEntryIfPresent(attributeEntries, "childLocationId", complaint.getChildLocation());
-        addAttributeEntryIfPresent(attributeEntries, "stateId", complaint.getState());
-        addAttributeEntryIfPresent(attributeEntries, "assigneeId", toString(complaint.getAssignee()));
-        addAttributeEntryIfPresent(attributeEntries, "departmentId", toString(complaint.getDepartment()));
-        addAttributeEntryIfPresent(attributeEntries, "citizenFeedback",complaint.getCitizenFeedback());
-        return attributeEntries;
-    }
-
-    private String toString(Long longValue) {
-        return longValue == null ? null : longValue.toString();
-    }
-
-    private void addAttributeEntryIfPresent(ArrayList<AttributeEntry> attributeEntries, String key, String name) {
-        if (isEmpty(name)) {
-            return;
-        }
-        attributeEntries.add(new AttributeEntry(key, name));
-    }
-
-    private Map<String, String> getAdditionalValues(Complaint complaint) {
-        final HashMap<String, String> map = new HashMap<>();
-        map.put("receivingMode", complaint.getReceivingMode());
-        map.put("complaintStatus", complaint.getComplaintStatus());
-        addEntryIfPresent(map, "receivingCenter", complaint.getReceivingCenter());
-        addEntryIfPresent(map, "locationId", complaint.getComplaintLocation().getLocationId());
-        addEntryIfPresent(map, "childLocationId", complaint.getChildLocation());
-        addEntryIfPresent(map, "stateId", complaint.getState());
-        addEntryIfPresent(map, "assigneeId", toString(complaint.getAssignee()));
-        addEntryIfPresent(map, "departmentId", toString(complaint.getDepartment()));
-        addEntryIfPresent(map, "citizenFeedback",complaint.getCitizenFeedback());
-        return map;
-    }
-
-    private void addEntryIfPresent(Map<String, String> map, String key, String item) {
-        if (!isEmpty(item)) {
-            map.put(key, item);
-        }
-    }
-
-    public Complaint toDomainForCreateRequest(AuthenticatedUser authenticatedUser) {
+    public org.egov.pgrrest.read.domain.model.ServiceRequest toDomainForCreateRequest(AuthenticatedUser
+                                                                                          authenticatedUser) {
         return toDomain(authenticatedUser, false);
     }
 
-    public Complaint toDomainForUpdateRequest(AuthenticatedUser authenticatedUser) {
+    public org.egov.pgrrest.read.domain.model.ServiceRequest toDomainForUpdateRequest(AuthenticatedUser
+                                                                                          authenticatedUser) {
         return toDomain(authenticatedUser, true);
     }
 
-    private Complaint toDomain(AuthenticatedUser authenticatedUser, boolean isUpdate) {
-        final ComplaintLocation complaintLocation = getComplaintLocation();
-        final Complainant complainant = getComplainant();
-        return Complaint.builder()
+    private org.egov.pgrrest.read.domain.model.ServiceRequest toDomain(AuthenticatedUser authenticatedUser, boolean
+        isUpdate) {
+        final ServiceRequestLocation serviceRequestLocation = getComplaintLocation();
+        final Requester complainant = getComplainant();
+        return org.egov.pgrrest.read.domain.model.ServiceRequest.builder()
             .authenticatedUser(authenticatedUser)
             .crn(crn)
-            .complaintType(new ComplaintType(complaintTypeName, complaintTypeCode, tenantId))
+            .complaintType(new ServiceRequestType(complaintTypeName, complaintTypeCode, tenantId))
             .address(address)
             .mediaUrls(mediaUrls)
-            .complaintLocation(complaintLocation)
-            .complainant(complainant)
+            .serviceRequestLocation(serviceRequestLocation)
+            .requester(complainant)
             .tenantId(tenantId)
             .description(description)
             .receivingMode(getReceivingMode())
             .receivingCenter(getReceivingCenter())
-            .modifyComplaint(isUpdate)
+            .modifyServiceRequest(isUpdate)
             .build();
     }
 
-    private Complainant getComplainant() {
+    private Requester getComplainant() {
         final String complainantAddress = getComplainantAddress();
         final String complainantUserId = getComplainantUserId();
-        return Complainant.builder()
+        return Requester.builder()
             .firstName(firstName)
             .mobile(phone)
             .email(email)
             .userId(complainantUserId)
             .address(complainantAddress)
-            .tenantId(tenantId)
             .build();
     }
 
-    private ComplaintLocation getComplaintLocation() {
-        final Coordinates coordinates = new Coordinates(latitude, longitude, tenantId);
-        return ComplaintLocation.builder()
+    private ServiceRequestLocation getComplaintLocation() {
+        final Coordinates coordinates = new Coordinates(latitude, longitude);
+        return ServiceRequestLocation.builder()
             .coordinates(coordinates)
             .crossHierarchyId(crossHierarchyId)
             .locationId(getLocationId())
-            .tenantId(tenantId)
             .build();
     }
 
